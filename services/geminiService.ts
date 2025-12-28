@@ -1,6 +1,6 @@
 import { GoogleGenAI, Modality } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const apiKey = process.env.API_KEY || "";
 
 const SYSTEM_INSTRUCTION = `You are a highly accurate AI Tutor for ITI students.
 Rules:
@@ -10,11 +10,19 @@ Rules:
 4. If English asked, reply in English.
 5. Be encouraging.`;
 
-// Old method (Full response) - kept for fallback if needed
+// Lazy initialization function to prevent top-level crashes
+const getAI = () => {
+  if (!apiKey) {
+    console.error("API_KEY is missing. Check your environment variables.");
+  }
+  return new GoogleGenAI({ apiKey });
+};
+
 export const getAITutorResponse = async (question: string): Promise<string> => {
   try {
+    const ai = getAI();
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-flash-preview',
       contents: question,
       config: { systemInstruction: SYSTEM_INSTRUCTION }
     });
@@ -25,11 +33,11 @@ export const getAITutorResponse = async (question: string): Promise<string> => {
   }
 };
 
-// NEW: Streaming method for Instant Reply
 export const getAITutorResponseStream = async function* (question: string) {
   try {
+    const ai = getAI();
     const responseStream = await ai.models.generateContentStream({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-flash-preview',
       contents: question,
       config: { 
         systemInstruction: SYSTEM_INSTRUCTION,
@@ -48,19 +56,14 @@ export const getAITutorResponseStream = async function* (question: string) {
 
 export const getGeminiSpeech = async (text: string): Promise<string | null> => {
   try {
-    // 1. Clean text: remove markdown artifacts that might interfere. 
-    // Replaces *, #, _, `, > with space to prevent concatenating words.
+    const ai = getAI();
     let cleanText = text.replace(/[\*#_`>]/g, ' ').replace(/\s+/g, ' ').trim();
-    
-    // 2. Validate: Do not send empty requests or requests with only punctuation/symbols.
-    // This regex checks for at least one alphanumeric character (supports Latin and Devanagari/Hindi).
     const hasContent = /[a-zA-Z0-9\u0900-\u097F]/.test(cleanText);
 
     if (!cleanText || !hasContent) {
       return null;
     }
     
-    // 3. Limit length conservatively to avoid timeouts or excessive token usage
     cleanText = cleanText.slice(0, 800);
     
     const response = await ai.models.generateContent({

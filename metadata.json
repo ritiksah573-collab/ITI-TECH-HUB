@@ -1,0 +1,7 @@
+{
+  "name": "ITI Tech Hub - ITI Students Community",
+  "description": "A centralized platform for ITI students accessing trade theory notes, practical guides, apprenticeships, and community support.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

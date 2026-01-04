@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Briefcase, Calendar, Building2, Zap, Settings, Wrench, Monitor, Truck, Flame, Globe } from 'lucide-react';
+import { MapPin, Briefcase, Calendar, Building2, Zap, Settings, Wrench, Monitor, Truck, Flame, Globe, Loader2 } from 'lucide-react';
 import { Job } from '../types';
 
 const defaultJobs: Job[] = [
@@ -13,21 +13,55 @@ const Jobs: React.FC = () => {
   const [filterType, setFilterType] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const dynamicJobs = JSON.parse(localStorage.getItem('dynamicJobs') || '[]');
-    // Combine dynamic and default, remove duplicates by ID just in case
-    const combined = [...dynamicJobs, ...defaultJobs];
-    const uniqueJobs = Array.from(new Map(combined.map(item => [item.id, item])).values());
-    setJobs(uniqueJobs);
+    const loadJobs = () => {
+      try {
+        const storedData = localStorage.getItem('dynamicJobs');
+        let dynamicJobs: Job[] = [];
+        
+        if (storedData) {
+          const parsed = JSON.parse(storedData);
+          dynamicJobs = Array.isArray(parsed) ? parsed : [];
+        }
+        
+        // Merge with defaults, prioritizing dynamic ones
+        const combined = [...dynamicJobs, ...defaultJobs];
+        
+        // Ensure unique IDs
+        const seen = new Set();
+        const unique = combined.filter(el => {
+          const duplicate = seen.has(el.id);
+          seen.add(el.id);
+          return !duplicate;
+        });
+        
+        setJobs(unique);
+      } catch (error) {
+        console.error("Failed to load jobs:", error);
+        setJobs(defaultJobs);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadJobs();
+    
+    // Listen for storage changes in case admin updates in another tab
+    window.addEventListener('storage', loadJobs);
+    return () => window.removeEventListener('storage', loadJobs);
   }, []);
 
   const filteredJobs = jobs.filter(job => {
+    const title = job.title?.toLowerCase() || "";
+    const company = job.company?.toLowerCase() || "";
+    const loc = job.location?.toLowerCase() || "";
+    const s = searchTerm.toLowerCase();
+
     const typeMatch = filterType === 'All' || job.type === filterType;
-    const searchMatch = (job.title?.toLowerCase() || "").includes(searchTerm.toLowerCase()) || 
-                        (job.company?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-                        (job.location?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-                        (job.tags || []).some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+    const searchMatch = title.includes(s) || company.includes(s) || loc.includes(s) || 
+                        (job.tags || []).some(tag => tag.toLowerCase().includes(s));
     return typeMatch && searchMatch;
   });
 
@@ -36,6 +70,17 @@ const Jobs: React.FC = () => {
     if (t.includes('elect')) return <Zap size={12} />;
     if (t.includes('fitter') || t.includes('mech')) return <Settings size={12} />;
     return <Wrench size={12} />;
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 text-blue-600 animate-spin mx-auto mb-4" />
+          <p className="text-gray-500 font-medium">Loading Latest Jobs...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -51,7 +96,7 @@ const Jobs: React.FC = () => {
               <input 
                 type="text" 
                 placeholder="Search job, company..." 
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none shadow-sm"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -104,7 +149,7 @@ const Jobs: React.FC = () => {
                          </div>
                       </div>
                       <div className="mt-4 md:mt-0">
-                         <button className="w-full md:w-auto px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition">Apply Now</button>
+                         <button className="w-full md:w-auto px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition shadow-sm">Apply Now</button>
                       </div>
                    </div>
                 </div>
@@ -112,7 +157,8 @@ const Jobs: React.FC = () => {
            ) : (
              <div className="text-center py-20 bg-white rounded-xl border border-gray-200">
                  <Globe size={48} className="mx-auto text-gray-300 mb-4" />
-                 <h3 className="text-lg font-medium text-gray-900">No jobs found</h3>
+                 <h3 className="text-lg font-medium text-gray-900">No jobs found matching your criteria</h3>
+                 <button onClick={() => {setSearchTerm(''); setFilterType('All')}} className="mt-4 text-blue-600 hover:underline">Reset Filters</button>
              </div>
            )}
         </div>

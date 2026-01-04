@@ -1,12 +1,12 @@
+// Process polyfill MUST be at the very top
+if (typeof window !== 'undefined') {
+  (window as any).process = (window as any).process || { env: {} };
+}
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
-
-// Simple fallback for process.env in browser ESM environments
-if (typeof window !== 'undefined') {
-  (window as any).process = (window as any).process || { env: {} };
-}
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

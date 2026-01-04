@@ -47,29 +47,35 @@ const AdminDashboard: React.FC = () => {
   };
 
   const saveData = (type: string, data: any) => {
-    localStorage.setItem(`dynamic${type}`, JSON.stringify(data));
+    // Normalize type to lowercase for storage keys
+    const storageKey = `dynamic${type.charAt(0).toUpperCase()}${type.slice(1).toLowerCase()}`;
+    // For consistency with current usage
+    const actualKey = type === 'jobs' ? 'dynamicJobs' : 
+                    type === 'notes' ? 'dynamicNotes' :
+                    type === 'exams' ? 'dynamicExams' : 'dynamicScholarships';
+    
+    localStorage.setItem(actualKey, JSON.stringify(data));
   };
 
   const deleteItem = (type: string, id: number) => {
     if(!window.confirm("Are you sure you want to delete this?")) return;
     
-    let updated;
-    if(activeTab === 'jobs') {
-      updated = jobs.filter(j => j.id !== id);
+    if(type === 'jobs') {
+      const updated = jobs.filter(j => j.id !== id);
       setJobs(updated);
-      saveData('Jobs', updated);
-    } else if(activeTab === 'notes') {
-      updated = notes.filter(n => n.id !== id);
+      saveData('jobs', updated);
+    } else if(type === 'notes') {
+      const updated = notes.filter(n => n.id !== id);
       setNotes(updated);
-      saveData('Notes', updated);
-    } else if(activeTab === 'exams') {
-      updated = exams.filter(e => e.id !== id);
+      saveData('notes', updated);
+    } else if(type === 'exams') {
+      const updated = exams.filter(e => e.id !== id);
       setExams(updated);
-      saveData('Exams', updated);
-    } else {
-      updated = scholarships.filter(s => s.id !== id);
+      saveData('exams', updated);
+    } else if(type === 'scholarships') {
+      const updated = scholarships.filter(s => s.id !== id);
       setScholarships(updated);
-      saveData('Scholarships', updated);
+      saveData('scholarships', updated);
     }
   };
 
@@ -94,19 +100,19 @@ const AdminDashboard: React.FC = () => {
     if(activeTab === 'jobs') {
       const updated = [newItem, ...jobs];
       setJobs(updated);
-      saveData('Jobs', updated);
+      saveData('jobs', updated);
     } else if(activeTab === 'notes') {
       const updated = [newItem, ...notes];
       setNotes(updated);
-      saveData('Notes', updated);
+      saveData('notes', updated);
     } else if(activeTab === 'exams') {
       const updated = [newItem, ...exams];
       setExams(updated);
-      saveData('Exams', updated);
+      saveData('exams', updated);
     } else if(activeTab === 'scholarships') {
       const updated = [newItem, ...scholarships];
       setScholarships(updated);
-      saveData('Scholarships', updated);
+      saveData('scholarships', updated);
     }
 
     setShowModal(false);

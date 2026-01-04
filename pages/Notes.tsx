@@ -13,19 +13,24 @@ const defaultNotes: Note[] = [
 const Notes: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBranch, setSelectedBranch] = useState('All');
-  const [viewingNote, setViewingNote] = useState<Note | null>(null);
-  const [noteContent, setNoteContent] = useState<string>('');
   const [notes, setNotes] = useState<Note[]>([]);
 
   useEffect(() => {
-    const dynamicNotes = JSON.parse(localStorage.getItem('dynamicNotes') || '[]');
-    setNotes([...dynamicNotes, ...defaultNotes]);
+    try {
+      const storedNotes = localStorage.getItem('dynamicNotes');
+      const dynamicNotes = storedNotes ? JSON.parse(storedNotes) : [];
+      const safeDynamicNotes = Array.isArray(dynamicNotes) ? dynamicNotes : [];
+      setNotes([...safeDynamicNotes, ...defaultNotes]);
+    } catch (e) {
+      console.error("Error loading notes:", e);
+      setNotes(defaultNotes);
+    }
   }, []);
 
   const filteredNotes = notes.filter(note => {
     const branchMatch = selectedBranch === 'All' || note.branch === selectedBranch;
-    const searchMatch = note.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                        note.subject.toLowerCase().includes(searchTerm.toLowerCase());
+    const searchMatch = (note.title?.toLowerCase() || "").includes(searchTerm.toLowerCase()) || 
+                        (note.subject?.toLowerCase() || "").includes(searchTerm.toLowerCase());
     return branchMatch && searchMatch;
   });
 
@@ -39,14 +44,13 @@ const Notes: React.FC = () => {
   };
 
   const getNoteContent = (note: Note): string => {
-    // Dynamic content generation logic...
     return `ITI TECH HUB - Premium Study Notes\nTitle: ${note.title}\nTrade: ${note.branch}\nSession: ${note.semester}\n\n[Full Trade Content Loading in App...]`;
   };
 
   const handleDownload = (note: Note) => {
     const doc = new jsPDF();
     doc.text(getNoteContent(note), 15, 20);
-    doc.save(`${note.title}.pdf`);
+    doc.save(`${note.title.replace(/\s+/g, '_')}.pdf`);
   };
 
   return (
@@ -64,13 +68,13 @@ const Notes: React.FC = () => {
               <input 
                 type="text" 
                 placeholder="Search Trade or Subject..."
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none shadow-sm"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <div className="md:col-span-4">
-              <select className="w-full px-4 py-2.5 border border-gray-300 rounded-lg" value={selectedBranch} onChange={(e) => setSelectedBranch(e.target.value)}>
+              <select className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white outline-none shadow-sm" value={selectedBranch} onChange={(e) => setSelectedBranch(e.target.value)}>
                 <option value="All">All Trades</option>
                 <option value="ITI Electrician">Electrician</option>
                 <option value="ITI Fitter">Fitter</option>
@@ -82,7 +86,7 @@ const Notes: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredNotes.map((note) => (
-            <div key={note.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 group">
+            <div key={note.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 group hover:border-blue-200 transition">
               <div className="flex justify-between items-start mb-4">
                 <div className="p-3 rounded-lg bg-orange-50 text-orange-600">{getBranchIcon(note.branch)}</div>
                 <span className="text-xs font-bold px-2 py-1 rounded-full bg-blue-50 text-blue-700">{note.semester}</span>
@@ -90,8 +94,8 @@ const Notes: React.FC = () => {
               <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition">{note.title}</h3>
               <p className="text-sm text-gray-500 mb-4">{note.subject}</p>
               <div className="flex gap-2">
-                <button onClick={() => setViewingNote(note)} className="flex-1 py-2 text-sm font-medium bg-gray-50 hover:bg-gray-100 rounded-lg transition flex items-center justify-center gap-2"><Eye size={16}/> View</button>
-                <button onClick={() => handleDownload(note)} className="flex-1 py-2 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition flex items-center justify-center gap-2"><Download size={16}/> PDF</button>
+                <button className="flex-1 py-2 text-sm font-medium bg-gray-50 hover:bg-gray-100 rounded-lg transition flex items-center justify-center gap-2"><Eye size={16}/> View</button>
+                <button onClick={() => handleDownload(note)} className="flex-1 py-2 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition flex items-center justify-center gap-2 shadow-sm"><Download size={16}/> PDF</button>
               </div>
             </div>
           ))}

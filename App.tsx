@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import MobileNav from './components/MobileNav';
 import Footer from './components/Footer';
+
+// Pages
 import Home from './pages/Home';
 import Notes from './pages/Notes';
 import PYQs from './pages/PYQs';
@@ -22,36 +24,40 @@ const App: React.FC = () => {
   return (
     <Router>
       <div className="flex flex-col min-h-screen font-sans bg-gray-50">
-        {/* We use a conditional check or just define all routes here for better Vercel handling */}
         <Routes>
-          {/* Admin Path - Clean access */}
+          {/* Admin Routes - No Navbar/Footer */}
           <Route path="/admin" element={<Login />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
 
-          {/* All other routes with Global Components */}
-          <Route path="*" element={
-            <>
-              <Navbar />
-              <main className="flex-grow pb-16 md:pb-0">
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/exams" element={<ExamResults />} />
-                  <Route path="/admissions" element={<Admissions />} />
-                  <Route path="/notes" element={<Notes />} />
-                  <Route path="/handwritten-notes" element={<HandWrittenNotes />} />
-                  <Route path="/learn-machines" element={<LearnMachines />} />
-                  <Route path="/pyqs" element={<PYQs />} />
-                  <Route path="/jobs" element={<Jobs />} />
-                  <Route path="/scholarships" element={<Scholarships />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/contact" element={<Contact />} />
-                  <Route path="/aibuddy" element={<AIBuddy />} />
-                </Routes>
-              </main>
-              <Footer />
-              <MobileNav />
-            </>
-          } />
+          {/* Public Routes - With Navbar/Footer */}
+          <Route
+            path="*"
+            element={
+              <>
+                <Navbar />
+                <main className="flex-grow pb-16 md:pb-0">
+                  <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/exams" element={<ExamResults />} />
+                    <Route path="/admissions" element={<Admissions />} />
+                    <Route path="/notes" element={<Notes />} />
+                    <Route path="/handwritten-notes" element={<HandWrittenNotes />} />
+                    <Route path="/learn-machines" element={<LearnMachines />} />
+                    <Route path="/pyqs" element={<PYQs />} />
+                    <Route path="/jobs" element={<Jobs />} />
+                    <Route path="/scholarships" element={<Scholarships />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/aibuddy" element={<AIBuddy />} />
+                    {/* Fallback for any unknown route */}
+                    <Route path="*" element={<Home />} />
+                  </Routes>
+                </main>
+                <Footer />
+                <MobileNav />
+              </>
+            }
+          />
         </Routes>
       </div>
     </Router>

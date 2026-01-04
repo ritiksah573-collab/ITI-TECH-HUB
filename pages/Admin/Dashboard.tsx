@@ -18,6 +18,16 @@ const AdminDashboard: React.FC = () => {
   
   const [showModal, setShowModal] = useState(false);
 
+  const safeParse = (key: string) => {
+    try {
+      const data = localStorage.getItem(key);
+      return data ? JSON.parse(data) : [];
+    } catch (e) {
+      console.error(`Error parsing ${key}`, e);
+      return [];
+    }
+  };
+
   useEffect(() => {
     const auth = localStorage.getItem('isAdminAuthenticated');
     if (!auth) {
@@ -25,10 +35,10 @@ const AdminDashboard: React.FC = () => {
       return;
     }
 
-    setJobs(JSON.parse(localStorage.getItem('dynamicJobs') || '[]'));
-    setNotes(JSON.parse(localStorage.getItem('dynamicNotes') || '[]'));
-    setExams(JSON.parse(localStorage.getItem('dynamicExams') || '[]'));
-    setScholarships(JSON.parse(localStorage.getItem('dynamicScholarships') || '[]'));
+    setJobs(safeParse('dynamicJobs'));
+    setNotes(safeParse('dynamicNotes'));
+    setExams(safeParse('dynamicExams'));
+    setScholarships(safeParse('dynamicScholarships'));
   }, [navigate]);
 
   const handleLogout = () => {
@@ -44,20 +54,23 @@ const AdminDashboard: React.FC = () => {
     if(!window.confirm("Are you sure you want to delete this?")) return;
     
     let updated;
-    if(type === 'Jobs') {
+    if(activeTab === 'jobs') {
       updated = jobs.filter(j => j.id !== id);
       setJobs(updated);
-    } else if(type === 'Notes') {
+      saveData('Jobs', updated);
+    } else if(activeTab === 'notes') {
       updated = notes.filter(n => n.id !== id);
       setNotes(updated);
-    } else if(type === 'Exams') {
+      saveData('Notes', updated);
+    } else if(activeTab === 'exams') {
       updated = exams.filter(e => e.id !== id);
       setExams(updated);
+      saveData('Exams', updated);
     } else {
       updated = scholarships.filter(s => s.id !== id);
       setScholarships(updated);
+      saveData('Scholarships', updated);
     }
-    saveData(type, updated);
   };
 
   const handleAddItem = (e: React.FormEvent) => {
@@ -65,7 +78,7 @@ const AdminDashboard: React.FC = () => {
     const formData = new FormData(e.currentTarget as HTMLFormElement);
     const newItem: any = { 
       id: Date.now(),
-      postedDate: 'Just Now', // Required for Jobs page
+      postedDate: 'Just Now',
       status: 'Live',
       tags: [] 
     };
@@ -192,7 +205,7 @@ const AdminDashboard: React.FC = () => {
                         <td className="px-6 py-4 font-bold text-gray-900">{item.title || item.name}</td>
                         <td className="px-6 py-4 text-sm text-gray-500">{item.company || item.subject || item.state || item.provider}</td>
                         <td className="px-6 py-4 text-right">
-                          <button onClick={() => deleteItem(activeTab.charAt(0).toUpperCase() + activeTab.slice(1), item.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"><Trash2 size={18}/></button>
+                          <button onClick={() => deleteItem(activeTab, item.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"><Trash2 size={18}/></button>
                         </td>
                       </tr>
                     ))}
@@ -246,9 +259,9 @@ const AdminDashboard: React.FC = () => {
 
                {activeTab === 'notes' && (
                  <>
-                  <input name="branch" placeholder="Branch" required className="w-full border rounded-xl p-3 mb-2" />
-                  <input name="subject" placeholder="Subject" required className="w-full border rounded-xl p-3 mb-2" />
-                  <select name="semester" className="w-full border rounded-xl p-3">
+                  <input name="branch" placeholder="Branch" required className="w-full border rounded-xl p-3 mb-2 outline-none" />
+                  <input name="subject" placeholder="Subject" required className="w-full border rounded-xl p-3 mb-2 outline-none" />
+                  <select name="semester" className="w-full border rounded-xl p-3 outline-none">
                     <option value="1st Year">1st Year</option>
                     <option value="2nd Year">2nd Year</option>
                   </select>
@@ -257,21 +270,21 @@ const AdminDashboard: React.FC = () => {
 
                {activeTab === 'exams' && (
                  <>
-                  <input name="state" placeholder="State" required className="w-full border rounded-xl p-3 mb-2" />
-                  <input name="board" placeholder="Board" required className="w-full border rounded-xl p-3 mb-2" />
-                  <select name="type" className="w-full border rounded-xl p-3 mb-2">
+                  <input name="state" placeholder="State" required className="w-full border rounded-xl p-3 mb-2 outline-none" />
+                  <input name="board" placeholder="Board" required className="w-full border rounded-xl p-3 mb-2 outline-none" />
+                  <select name="type" className="w-full border rounded-xl p-3 mb-2 outline-none">
                     <option value="Schedule">Schedule</option>
                     <option value="Result">Result</option>
                   </select>
-                  <input name="date" placeholder="Date String" required className="w-full border rounded-xl p-3" />
+                  <input name="date" placeholder="Date String" required className="w-full border rounded-xl p-3 outline-none" />
                  </>
                )}
 
                {activeTab === 'scholarships' && (
                  <>
-                  <input name="provider" placeholder="Provider" required className="w-full border rounded-xl p-3 mb-2" />
-                  <input name="amount" placeholder="Amount" required className="w-full border rounded-xl p-3 mb-2" />
-                  <input name="deadline" placeholder="Deadline" required className="w-full border rounded-xl p-3" />
+                  <input name="provider" placeholder="Provider" required className="w-full border rounded-xl p-3 mb-2 outline-none" />
+                  <input name="amount" placeholder="Amount" required className="w-full border rounded-xl p-3 mb-2 outline-none" />
+                  <input name="deadline" placeholder="Deadline" required className="w-full border rounded-xl p-3 outline-none" />
                  </>
                )}
 

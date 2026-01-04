@@ -1,5 +1,6 @@
 import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import Navbar from './components/Navbar';
 import MobileNav from './components/MobileNav';
 import Footer from './components/Footer';
@@ -24,6 +25,7 @@ const App: React.FC = () => {
   return (
     <Router>
       <div className="flex flex-col min-h-screen font-sans bg-gray-50">
+        <Analytics />
         <Routes>
           {/* Admin Routes - No Navbar/Footer */}
           <Route path="/admin" element={<Login />} />

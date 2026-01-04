@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapPin, Briefcase, Calendar, Building2, Zap, Settings, Wrench, Monitor, Truck, Flame, Globe } from 'lucide-react';
 import { Job } from '../types';
 
-const mockJobs: Job[] = [
+const defaultJobs: Job[] = [
   // --- GOVERNMENT / PSU JOBS (2026 Cycle) ---
   { id: 1, title: 'RRB ALP & Technician Recruitment 2026', company: 'Indian Railways', location: 'Pan India', type: 'Government', postedDate: 'Just Now', tags: ['ITI', 'Electrical', 'Mechanical', 'Fitter'] },
   { id: 3, title: 'DRDO CEPTAM-11 (Technician A) 2026', company: 'DRDO', location: 'Multiple Locations', type: 'Government', postedDate: '1 day ago', tags: ['ITI', 'Fitter', 'Electrician', 'COPA'] },
@@ -27,8 +27,19 @@ const mockJobs: Job[] = [
 const Jobs: React.FC = () => {
   const [filterType, setFilterType] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
+  const [jobs, setJobs] = useState<Job[]>([]);
 
-  const filteredJobs = mockJobs.filter(job => {
+  useEffect(() => {
+    // Check if admin has posted any jobs, otherwise use defaults
+    const dynamicJobs = JSON.parse(localStorage.getItem('dynamicJobs') || '[]');
+    if (dynamicJobs.length > 0) {
+      setJobs([...dynamicJobs, ...defaultJobs]);
+    } else {
+      setJobs(defaultJobs);
+    }
+  }, []);
+
+  const filteredJobs = jobs.filter(job => {
     const typeMatch = filterType === 'All' || job.type === filterType;
     const searchMatch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                         job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -116,7 +127,7 @@ const Jobs: React.FC = () => {
                                }`}>
                                   {job.type}
                                </span>
-                               {job.tags.map(tag => (
+                               {job.tags && job.tags.map(tag => (
                                   <span key={tag} className="flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded bg-gray-100 text-gray-600 border border-gray-200">
                                      {getTagIcon(tag)} {tag}
                                   </span>

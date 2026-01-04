@@ -11,15 +11,12 @@ const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'overview' | 'jobs' | 'notes' | 'exams' | 'scholarships'>('overview');
   
-  // States for all data types
   const [jobs, setJobs] = useState<Job[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [exams, setExams] = useState<any[]>([]);
   const [scholarships, setScholarships] = useState<any[]>([]);
   
-  // Modal States
   const [showModal, setShowModal] = useState(false);
-  const [editingItem, setEditingItem] = useState<any>(null);
 
   useEffect(() => {
     const auth = localStorage.getItem('isAdminAuthenticated');
@@ -28,7 +25,6 @@ const AdminDashboard: React.FC = () => {
       return;
     }
 
-    // Load all data from storage
     setJobs(JSON.parse(localStorage.getItem('dynamicJobs') || '[]'));
     setNotes(JSON.parse(localStorage.getItem('dynamicNotes') || '[]'));
     setExams(JSON.parse(localStorage.getItem('dynamicExams') || '[]'));
@@ -67,10 +63,19 @@ const AdminDashboard: React.FC = () => {
   const handleAddItem = (e: React.FormEvent) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget as HTMLFormElement);
-    const newItem: any = { id: Date.now() };
+    const newItem: any = { 
+      id: Date.now(),
+      postedDate: 'Just Now', // Required for Jobs page
+      status: 'Live',
+      tags: [] 
+    };
+
     formData.forEach((value, key) => {
-      if(key === 'tags') newItem[key] = (value as string).split(',').map(s => s.trim());
-      else newItem[key] = value;
+      if(key === 'tags') {
+        newItem[key] = (value as string).split(',').map(s => s.trim()).filter(s => s !== "");
+      } else {
+        newItem[key] = value;
+      }
     });
 
     if(activeTab === 'jobs') {
@@ -108,7 +113,6 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
       <aside className="w-64 bg-gray-900 text-white flex flex-col fixed inset-y-0 z-50">
         <div className="p-6 border-b border-gray-800 flex items-center gap-2">
           <Database className="text-orange-500" />
@@ -135,16 +139,12 @@ const AdminDashboard: React.FC = () => {
           ))}
         </nav>
         <div className="p-4 border-t border-gray-800">
-          <button 
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition"
-          >
+          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition">
             <LogOut size={20} /> Logout
           </button>
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 ml-64 min-h-screen">
         <header className="bg-white/80 backdrop-blur border-b border-gray-200 h-16 flex items-center justify-between px-8 sticky top-0 z-40">
           <h1 className="text-lg font-bold text-gray-800 capitalize">{activeTab} Management</h1>
@@ -166,25 +166,14 @@ const AdminDashboard: React.FC = () => {
                 <StatCard title="Exam Updates" count={exams.length} icon={Calendar} color="bg-green-50 text-green-600" />
                 <StatCard title="Scholarships" count={scholarships.length} icon={IndianRupee} color="bg-purple-50 text-purple-600" />
               </div>
-              
-              <div className="bg-indigo-600 rounded-2xl p-8 text-white flex items-center justify-between shadow-xl">
-                <div>
-                  <h2 className="text-2xl font-bold mb-2">Welcome back, Chief!</h2>
-                  <p className="text-indigo-100">Use the sidebar to manage your student community resources.</p>
-                </div>
-                <Bell size={48} className="opacity-20" />
-              </div>
             </div>
           )}
 
           {activeTab !== 'overview' && (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                <h3 className="font-bold text-gray-800">Existing {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</h3>
-                <button 
-                  onClick={() => setShowModal(true)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-bold transition shadow-md shadow-blue-200"
-                >
+                <h3 className="font-bold text-gray-800">Existing {activeTab}</h3>
+                <button onClick={() => setShowModal(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-bold transition">
                   <Plus size={18} /> New Entry
                 </button>
               </div>
@@ -194,22 +183,14 @@ const AdminDashboard: React.FC = () => {
                     <tr>
                       <th className="px-6 py-4">Title / Name</th>
                       <th className="px-6 py-4">Secondary Info</th>
-                      <th className="px-6 py-4">Status</th>
                       <th className="px-6 py-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {(activeTab === 'jobs' ? jobs : activeTab === 'notes' ? notes : activeTab === 'exams' ? exams : scholarships).map((item: any) => (
                       <tr key={item.id} className="hover:bg-gray-50 transition">
-                        <td className="px-6 py-4">
-                          <p className="font-bold text-gray-900">{item.title || item.name}</p>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {item.company || item.subject || item.state || item.provider}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="px-2 py-1 bg-green-50 text-green-600 text-[10px] font-bold rounded">LIVE</span>
-                        </td>
+                        <td className="px-6 py-4 font-bold text-gray-900">{item.title || item.name}</td>
+                        <td className="px-6 py-4 text-sm text-gray-500">{item.company || item.subject || item.state || item.provider}</td>
                         <td className="px-6 py-4 text-right">
                           <button onClick={() => deleteItem(activeTab.charAt(0).toUpperCase() + activeTab.slice(1), item.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"><Trash2 size={18}/></button>
                         </td>
@@ -223,18 +204,17 @@ const AdminDashboard: React.FC = () => {
         </div>
       </main>
 
-      {/* Entry Modal */}
       {showModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <form onSubmit={handleAddItem} className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+          <form onSubmit={handleAddItem} className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-               <h2 className="text-xl font-bold text-gray-900">Add {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</h2>
+               <h2 className="text-xl font-bold text-gray-900">Add {activeTab}</h2>
                <button type="button" onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-200 rounded-full transition"><X/></button>
             </div>
             <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
                <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Title / Name</label>
-                  <input name={activeTab === 'scholarships' ? 'name' : 'title'} required type="text" className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none" />
+                  <input name={activeTab === 'scholarships' ? 'name' : 'title'} required type="text" className="w-full border rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500" />
                </div>
                
                {activeTab === 'jobs' && (
@@ -242,11 +222,11 @@ const AdminDashboard: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Company</label>
-                      <input name="company" required type="text" className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none" />
+                      <input name="company" required type="text" className="w-full border rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500" />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Location</label>
-                      <input name="location" required type="text" className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none" />
+                      <input name="location" required type="text" className="w-full border rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500" />
                     </div>
                   </div>
                   <div>
@@ -258,83 +238,48 @@ const AdminDashboard: React.FC = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Tags (Comma separated)</label>
-                    <input name="tags" type="text" placeholder="Electrician, Fitter, ITI" className="w-full border rounded-xl p-3 outline-none" />
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Tags (e.g. ITI, Fitter)</label>
+                    <input name="tags" type="text" placeholder="Electrician, ITI" className="w-full border rounded-xl p-3 outline-none" />
                   </div>
                  </>
                )}
 
                {activeTab === 'notes' && (
                  <>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Trade/Branch</label>
-                    <input name="branch" required type="text" className="w-full border rounded-xl p-3 outline-none" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Subject</label>
-                    <input name="subject" required type="text" className="w-full border rounded-xl p-3 outline-none" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Year/Semester</label>
-                    <select name="semester" className="w-full border rounded-xl p-3 outline-none">
-                      <option value="1st Year">1st Year</option>
-                      <option value="2nd Year">2nd Year</option>
-                    </select>
-                  </div>
+                  <input name="branch" placeholder="Branch" required className="w-full border rounded-xl p-3 mb-2" />
+                  <input name="subject" placeholder="Subject" required className="w-full border rounded-xl p-3 mb-2" />
+                  <select name="semester" className="w-full border rounded-xl p-3">
+                    <option value="1st Year">1st Year</option>
+                    <option value="2nd Year">2nd Year</option>
+                  </select>
                  </>
                )}
 
                {activeTab === 'exams' && (
                  <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">State</label>
-                      <input name="state" required type="text" className="w-full border rounded-xl p-3 outline-none" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Board</label>
-                      <input name="board" required type="text" className="w-full border rounded-xl p-3 outline-none" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Type</label>
-                    <select name="type" className="w-full border rounded-xl p-3 outline-none">
-                      <option value="Schedule">Schedule / Time Table</option>
-                      <option value="Result">Exam Result</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Date String</label>
-                    <input name="date" required type="text" placeholder="July 2026" className="w-full border rounded-xl p-3 outline-none" />
-                  </div>
+                  <input name="state" placeholder="State" required className="w-full border rounded-xl p-3 mb-2" />
+                  <input name="board" placeholder="Board" required className="w-full border rounded-xl p-3 mb-2" />
+                  <select name="type" className="w-full border rounded-xl p-3 mb-2">
+                    <option value="Schedule">Schedule</option>
+                    <option value="Result">Result</option>
+                  </select>
+                  <input name="date" placeholder="Date String" required className="w-full border rounded-xl p-3" />
                  </>
                )}
 
                {activeTab === 'scholarships' && (
                  <>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Provider</label>
-                    <input name="provider" required type="text" className="w-full border rounded-xl p-3 outline-none" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Amount</label>
-                    <input name="amount" required type="text" placeholder="₹12,000 per year" className="w-full border rounded-xl p-3 outline-none" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Deadline</label>
-                    <input name="deadline" required type="text" placeholder="31st Oct 2025" className="w-full border rounded-xl p-3 outline-none" />
-                  </div>
+                  <input name="provider" placeholder="Provider" required className="w-full border rounded-xl p-3 mb-2" />
+                  <input name="amount" placeholder="Amount" required className="w-full border rounded-xl p-3 mb-2" />
+                  <input name="deadline" placeholder="Deadline" required className="w-full border rounded-xl p-3" />
                  </>
                )}
 
-               <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Description / Link</label>
-                  <textarea name="description" rows={3} className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
-               </div>
+               <textarea name="description" placeholder="Description or Link" rows={3} className="w-full border rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500"></textarea>
             </div>
             <div className="p-6 bg-gray-50 border-t flex justify-end gap-3">
                <button type="button" onClick={() => setShowModal(false)} className="px-6 py-2.5 text-gray-500 font-bold hover:bg-gray-100 rounded-xl transition">Cancel</button>
-               <button type="submit" className="px-8 py-2.5 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition">Publish Live</button>
+               <button type="submit" className="px-8 py-2.5 bg-blue-600 text-white font-bold rounded-xl shadow-lg hover:bg-blue-700 transition">Publish Live</button>
             </div>
           </form>
         </div>

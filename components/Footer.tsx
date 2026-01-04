@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, Shield } from 'lucide-react';
+import { Mail, Phone, MapPin, Shield, Lock } from 'lucide-react';
 
 const Footer: React.FC = () => {
   return (
@@ -12,6 +12,11 @@ const Footer: React.FC = () => {
             <p className="text-gray-400 text-sm mb-4">
               India's largest and most active community for ITI students. Connecting you to trade theory, apprenticeships, and career opportunities.
             </p>
+            <div className="mt-6">
+                <Link to="/admin" className="inline-flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg text-xs font-bold transition-all border border-gray-700">
+                    <Lock size={12}/> Admin Portal
+                </Link>
+            </div>
           </div>
 
           <div>
@@ -20,15 +25,15 @@ const Footer: React.FC = () => {
               <li><Link to="/notes" className="hover:text-orange-500">Trade Notes</Link></li>
               <li><Link to="/jobs" className="hover:text-orange-500">Job Alerts</Link></li>
               <li><Link to="/pyqs" className="hover:text-orange-500">Trade Papers</Link></li>
-              <li><Link to="/admin" className="text-gray-700 hover:text-gray-600 transition flex items-center gap-1 mt-4"><Shield size={12}/> Admin Panel</Link></li>
+              <li><Link to="/exams" className="hover:text-orange-500">Exam Results</Link></li>
             </ul>
           </div>
 
           <div>
             <h4 className="text-lg font-semibold mb-4">Student Resources</h4>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li><Link to="/about" className="hover:text-orange-500">Success Stories</Link></li>
-              <li><Link to="/contact" className="hover:text-orange-500">Mentorship Program</Link></li>
+              <li><Link to="/handwritten-notes" className="hover:text-orange-500">Handwritten Notes</Link></li>
+              <li><Link to="/scholarships" className="hover:text-orange-500">Scholarship Updates</Link></li>
               <li><a href="https://whatsapp.com/channel/0029Vb7wcUmFCCoR6zDELM07" target="_blank" rel="noopener noreferrer" className="hover:text-orange-500">WhatsApp Channel</a></li>
             </ul>
           </div>

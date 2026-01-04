@@ -22,13 +22,14 @@ const App: React.FC = () => {
   return (
     <Router>
       <div className="flex flex-col min-h-screen font-sans bg-gray-50">
+        {/* We use a conditional check or just define all routes here for better Vercel handling */}
         <Routes>
-          {/* Admin Routes - No Navbar/Footer */}
+          {/* Admin Path - Clean access */}
           <Route path="/admin" element={<Login />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
 
-          {/* User Routes */}
-          <Route path="/*" element={
+          {/* All other routes with Global Components */}
+          <Route path="*" element={
             <>
               <Navbar />
               <main className="flex-grow pb-16 md:pb-0">

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { MapPin, Briefcase, Calendar, Building2, Zap, Settings, Wrench, Monitor, Truck, Flame, Globe, Loader2 } from 'lucide-react';
 import { Job } from '../types';
@@ -18,7 +19,7 @@ const Jobs: React.FC = () => {
   useEffect(() => {
     const loadJobs = () => {
       try {
-        const storedData = localStorage.getItem('dynamicJobs');
+        const storedData = localStorage.getItem('iti_dynamic_jobs');
         let dynamicJobs: Job[] = [];
         
         if (storedData) {
@@ -47,8 +48,6 @@ const Jobs: React.FC = () => {
     };
 
     loadJobs();
-    
-    // Listen for storage changes in case admin updates in another tab
     window.addEventListener('storage', loadJobs);
     return () => window.removeEventListener('storage', loadJobs);
   }, []);

@@ -1,15 +1,31 @@
-import React from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, Briefcase, FileText, ChevronRight, Zap, GraduationCap } from 'lucide-react';
+import { SiteConfig } from '../types';
 
 const Home: React.FC = () => {
-  const trendingUpdates = [
-    "🔥 RRB ALP 2026 Notification Out (Technician Posts)",
-    "🚀 Tata Motors ITI Apprentice 2026 Applications Open",
-    "💼 DRDO CEPTAM-11 Technician-A Recruitment",
-    "🔧 Railway Apprentice 2026-27 Batches Announced",
-    "⚡ UPPCL TG-2 (Technician) Vacancy Coming Soon"
-  ];
+  const [config, setConfig] = useState<SiteConfig>({
+    heroTitle: "India’s Largest ITI Students Community",
+    heroSubTitle: "Access premium trade theory notes, NCVT papers, job alerts, and apprenticeships. Empowering your technical skill journey.",
+    marqueeUpdates: [
+      "🔥 RRB ALP 2026 Notification Out (Technician Posts)",
+      "🚀 Tata Motors ITI Apprentice 2026 Applications Open",
+      "💼 DRDO CEPTAM-11 Technician-A Recruitment",
+      "🔧 Railway Apprentice 2026-27 Batches Announced"
+    ]
+  });
+
+  useEffect(() => {
+    const saved = localStorage.getItem('iti_site_config');
+    if (saved) {
+      try {
+        setConfig(JSON.parse(saved));
+      } catch (e) {
+        console.error("Home config parse error", e);
+      }
+    }
+  }, []);
 
   const branches = [
     { name: 'ITI Electrician', icon: '🔌', color: 'bg-yellow-50 text-yellow-700' },
@@ -34,16 +50,15 @@ const Home: React.FC = () => {
             alt="Engineering Work" 
             className="w-full h-full object-cover"
           />
-          {/* Semi-transparent Overlay for text readability */}
-          <div className="absolute inset-0 bg-blue-900/10"></div>
+          <div className="absolute inset-0 bg-blue-900/40"></div>
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto text-center">
-          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4 md:mb-6 text-white drop-shadow-md">
-            India’s Largest <span className="text-orange-400">ITI Students</span> <br/>Community
+          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4 md:mb-6 text-white drop-shadow-lg">
+             {config.heroTitle}
           </h1>
           <p className="text-lg md:text-2xl font-bold mb-8 max-w-4xl mx-auto text-white leading-relaxed tracking-wide font-serif drop-shadow-sm">
-            Access premium trade theory notes, NCVT papers, job alerts, and apprenticeships. Empowering your technical skill journey.
+            {config.heroSubTitle}
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4 px-4">
             <Link to="/notes" className="px-8 py-3 bg-orange-500 hover:bg-orange-600 rounded-full font-semibold text-white shadow-lg transition transform hover:-translate-y-1 border border-orange-400">
@@ -59,10 +74,10 @@ const Home: React.FC = () => {
       {/* Trending Ticker */}
       <div className="bg-orange-50 border-b border-orange-100 py-3 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 flex items-center">
-          <span className="bg-orange-500 text-white text-[10px] sm:text-xs font-bold px-2 py-1 rounded mr-3 shrink-0">NEW</span>
+          <span className="bg-orange-500 text-white text-[10px] sm:text-xs font-bold px-2 py-1 rounded mr-3 shrink-0">LATEST UPDATES</span>
           <div className="whitespace-nowrap overflow-hidden relative flex-1">
              <div className="animate-marquee inline-block text-orange-800 text-sm font-medium">
-                {trendingUpdates.join(" ••• ")}
+                {config.marqueeUpdates.join(" ••• ")}
              </div>
           </div>
         </div>

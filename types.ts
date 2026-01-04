@@ -1,3 +1,4 @@
+
 export interface Note {
   id: number;
   title: string;
@@ -15,6 +16,12 @@ export interface Job {
   type: 'Government' | 'Private' | 'Apprenticeship';
   postedDate: string;
   tags: string[];
+}
+
+export interface SiteConfig {
+  heroTitle: string;
+  heroSubTitle: string;
+  marqueeUpdates: string[];
 }
 
 export interface Course {

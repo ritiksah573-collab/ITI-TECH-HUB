@@ -1,57 +1,46 @@
 
 import React, { useState, useEffect } from 'react';
-import { MapPin, Briefcase, Calendar, Building2, Zap, Settings, Wrench, Loader2, ExternalLink, Globe } from 'lucide-react';
-import { Job } from '../types';
+import { Building2, Loader2, MapPin, Briefcase } from 'lucide-react';
 import { dbService } from '../services/dbService';
 
-const defaultJobs: Job[] = [
-  { id: 1, title: 'RRB ALP & Technician Recruitment 2026', company: 'Indian Railways', location: 'Pan India', type: 'Government', postedDate: '1 Jan 2026', tags: ['ITI', 'Fitter'] },
-];
-
 const Jobs: React.FC = () => {
-  const [filterType, setFilterType] = useState('All');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsub = dbService.listenToCollection('jobs', (cloudJobs) => {
-      setJobs(cloudJobs.length > 0 ? cloudJobs : defaultJobs);
+    const unsub = dbService.listenToCollection('jobs', (data) => {
+      setJobs(data);
       setLoading(false);
     });
     return () => unsub();
   }, []);
 
-  const filteredJobs = jobs.filter(job => {
-    const title = (job as any).title?.toLowerCase() || "";
-    const s = searchTerm.toLowerCase();
-    const typeMatch = filterType === 'All' || job.type === filterType;
-    return typeMatch && title.includes(s);
-  });
-
-  if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-blue-600" size={40} /></div>;
 
   return (
-    <div className="bg-gray-50 min-h-screen py-8">
+    <div className="bg-gray-50 min-h-screen py-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-extrabold text-gray-900 mb-8">Cloud Jobs Portal</h1>
-        <div className="grid gap-5">
-           {filteredJobs.map((job: any) => (
-              <div key={job.id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:border-blue-300 transition-all">
-                 <div className="flex justify-between items-center">
-                    <div className="flex items-start gap-4">
-                       <div className="p-4 bg-blue-50 text-blue-600 rounded-xl"><Building2 size={30} /></div>
-                       <div>
-                          <h3 className="text-xl font-bold">{job.title}</h3>
-                          <p className="text-gray-500 font-medium">{job.company} • {job.location}</p>
-                       </div>
+        <div className="text-center mb-12">
+           <h1 className="text-4xl font-black text-slate-900 tracking-tight">Jobs Portal</h1>
+           <p className="text-slate-500 font-semibold mt-2">Latest ITI Apprenticeships & Private Jobs from across India.</p>
+        </div>
+
+        <div className="grid gap-6">
+           {jobs.map((job) => (
+              <div key={job.id} className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:border-primary transition-all flex flex-col md:flex-row justify-between items-center group">
+                 <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center group-hover:bg-blue-50 group-hover:text-primary transition-all">
+                       <Briefcase size={32} />
                     </div>
-                    {job.link && (
-                       <a href={job.link} target="_blank" className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-100">Apply Now</a>
-                    )}
+                    <div>
+                       <h3 className="text-xl font-bold text-slate-900 group-hover:text-primary transition-all">{job.title}</h3>
+                       <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">{job.company} • {job.type || 'Job'}</p>
+                    </div>
                  </div>
+                 <a href={job.link} target="_blank" className="mt-4 md:mt-0 px-10 py-4 bg-primary text-white rounded-2xl font-black shadow-lg shadow-blue-100 transition-all hover:scale-105 active:scale-95">Apply Now</a>
               </div>
            ))}
+           {jobs.length === 0 && <p className="text-center py-20 text-gray-400 font-black uppercase text-xs tracking-widest">No active jobs found in database.</p>}
         </div>
       </div>
     </div>

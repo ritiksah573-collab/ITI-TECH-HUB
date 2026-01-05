@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import MobileNav from './components/MobileNav';
@@ -20,17 +20,35 @@ import ExamResults from './pages/ExamResults';
 import LearnMachines from './pages/LearnMachines';
 import Login from './pages/Admin/Login';
 import AdminDashboard from './pages/Admin/Dashboard';
+import { dbService } from './services/dbService';
 
 const App: React.FC = () => {
+  const [themeColor, setThemeColor] = useState('#2563eb');
+
+  useEffect(() => {
+    const unsub = dbService.listenToConfig((config) => {
+      if (config?.primaryColor) {
+        setThemeColor(config.primaryColor);
+        document.documentElement.style.setProperty('--primary-color', config.primaryColor);
+      }
+    });
+    return () => unsub();
+  }, []);
+
   return (
     <Router>
       <div className="flex flex-col min-h-screen font-sans bg-gray-50">
+        <style>{`
+          :root { --primary-color: ${themeColor}; }
+          .bg-primary { background-color: var(--primary-color) !important; }
+          .text-primary { color: var(--primary-color) !important; }
+          .border-primary { border-color: var(--primary-color) !important; }
+          .focus-ring-primary:focus { --tw-ring-color: var(--primary-color); }
+        `}</style>
         <Routes>
-          {/* Admin Routes - No Navbar/Footer */}
           <Route path="/admin" element={<Login />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
 
-          {/* Public Routes - Wrapped in Layout */}
           <Route
             path="/*"
             element={

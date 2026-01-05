@@ -1,3 +1,4 @@
+
 import { 
   collection, 
   addDoc, 
@@ -13,16 +14,11 @@ import {
 import { db } from "./firebase";
 
 export const dbService = {
-  // Listen to any collection (Jobs, Admissions, etc.) in real-time
   listenToCollection: (collectionName: string, callback: (data: any[]) => void) => {
     if (!db) return () => {};
-    
-    const q = query(collection(db, collectionName));
+    const q = query(collection(db, collectionName), orderBy("createdAt", "desc"));
     return onSnapshot(q, (snapshot) => {
-      const items = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       callback(items);
     }, (error) => {
       console.error(`Error listening to ${collectionName}:`, error);
@@ -30,17 +26,14 @@ export const dbService = {
     });
   },
 
-  // Save or Update an item
   saveItem: async (collectionName: string, item: any) => {
     if (!db) return;
     try {
       if (item.id) {
-        // Update existing
         const docRef = doc(db, collectionName, String(item.id));
         const { id, ...data } = item;
-        await updateDoc(docRef, data);
+        await updateDoc(docRef, { ...data, updatedAt: new Date().toISOString() });
       } else {
-        // Create new
         await addDoc(collection(db, collectionName), {
           ...item,
           createdAt: new Date().toISOString()
@@ -53,7 +46,6 @@ export const dbService = {
     }
   },
 
-  // Delete an item
   deleteItem: async (collectionName: string, id: string | number) => {
     if (!db) return;
     try {
@@ -63,22 +55,36 @@ export const dbService = {
     }
   },
 
-  // Listen to site-wide config (Hero Title, Marquee)
   listenToConfig: (callback: (config: any) => void) => {
     if (!db) return () => {};
-    
     const docRef = doc(db, "settings", "siteConfig");
     return onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         callback(docSnap.data());
       } else {
-        // Default if not exists
         callback({
           heroTitle: "India’s Largest ITI Students Community",
-          heroSubTitle: "Access premium trade theory notes and job alerts.",
-          marqueeUpdates: ["Welcome to ITI Tech Hub Cloud!"]
+          heroSubTitle: "Access premium trade theory notes.",
+          marqueeUpdates: ["Welcome to ITI Tech Hub Cloud!"],
+          primaryColor: "#2563eb"
         });
       }
     });
+  },
+
+  // Admin Profile Management
+  getAdminProfile: async () => {
+    if (!db) return null;
+    const docRef = doc(db, "settings", "adminProfile");
+    const snap = await getDoc(docRef);
+    if (snap.exists()) return snap.data();
+    // Default if not set in cloud yet
+    return { username: "admin", password: "itiadmin123" };
+  },
+
+  saveAdminProfile: async (profile: any) => {
+    if (!db) return;
+    const docRef = doc(db, "settings", "adminProfile");
+    await setDoc(docRef, profile);
   }
 };

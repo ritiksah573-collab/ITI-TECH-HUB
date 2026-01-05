@@ -1,39 +1,51 @@
 
 export interface Note {
-  id: number;
+  id: string;
   title: string;
   subject: string;
   branch: string;
   semester: string;
-  downloadUrl: string;
-}
-
-export interface Job {
-  id: number;
-  title: string;
-  company: string;
-  location: string;
-  type: 'Government' | 'Private' | 'Apprenticeship';
-  postedDate: string;
-  tags: string[];
+  link: string;
 }
 
 export interface SiteConfig {
   heroTitle: string;
   heroSubTitle: string;
   marqueeUpdates: string[];
+  logoUrl?: string;
+  primaryColor?: string;
 }
 
+export interface AdminProfile {
+  username: string;
+  password: string;
+}
+
+export interface ContactLead {
+  id: string;
+  name: string;
+  email: string;
+  message: string;
+  createdAt: string;
+}
+
+export interface ChatMessage {
+  role: 'user' | 'model';
+  text: string;
+}
+
+// Added Course interface to resolve build error in pages/Skills.tsx
 export interface Course {
   id: number;
   title: string;
   provider: string;
   duration: string;
   price: string;
-  image: string;
   category: string;
+  image: string;
 }
 
+// Added ForumPost interface to resolve build error in pages/Community.tsx
 export interface ForumPost {
   id: number;
   author: string;
@@ -42,9 +54,4 @@ export interface ForumPost {
   replies: number;
   views: number;
   timeAgo: string;
-}
-
-export interface ChatMessage {
-  role: 'user' | 'model';
-  text: string;
 }

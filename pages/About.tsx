@@ -1,14 +1,25 @@
-import React from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Award, Heart, Target } from 'lucide-react';
+import { dbService } from '../services/dbService';
 
 const About: React.FC = () => {
+  const [aboutText, setAboutText] = useState("We are a dedicated team of former ITI instructors and engineers who believe that quality trade education resources should be accessible to every ITI student, everywhere.");
+
+  useEffect(() => {
+    const unsub = dbService.listenToConfig((config) => {
+      if (config?.aboutText) setAboutText(config.aboutText);
+    });
+    return () => unsub();
+  }, []);
+
   return (
     <div className="bg-white min-h-screen">
       <div className="py-20 bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h1 className="text-4xl font-extrabold text-gray-900 mb-6">About ITI Tech Hub</h1>
+          <h1 className="text-4xl font-extrabold text-gray-900 mb-6">About Us</h1>
           <p className="text-xl text-gray-600 leading-relaxed">
-            We are a dedicated team of former ITI instructors and engineers who believe that quality trade education resources should be accessible to every ITI student, everywhere.
+            {aboutText}
           </p>
         </div>
       </div>

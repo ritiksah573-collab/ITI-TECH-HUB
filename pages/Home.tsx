@@ -1,10 +1,13 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, FileText, Briefcase, Zap, GraduationCap } from 'lucide-react';
 import { SiteConfig } from '../types';
 import { dbService } from '../services/dbService';
 
+// Fix: Added missing required 'siteName' property to match the SiteConfig interface
 const DEFAULT_CONFIG: SiteConfig = {
+  siteName: "ITI Tech Hub",
   heroTitle: "India’s Largest ITI Students Community",
   heroSubTitle: "Access premium trade theory notes, NCVT papers, job alerts, and apprenticeships.",
   marqueeUpdates: [

@@ -6,13 +6,14 @@ import { dbService } from '../services/dbService';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [config, setConfig] = useState<any>({ siteName: 'ITI Tech Hub', logoUrl: null });
   const location = useLocation();
 
   useEffect(() => {
-    dbService.listenToConfig((config) => {
-      if (config?.logoUrl) setLogoUrl(config.logoUrl);
+    const unsub = dbService.listenToConfig((cloudConfig) => {
+      if (cloudConfig) setConfig(cloudConfig);
     });
+    return () => unsub();
   }, []);
 
   const isActive = (path: string) => location.pathname === path;
@@ -25,13 +26,13 @@ const Navbar: React.FC = () => {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center gap-2">
-              {logoUrl ? (
-                <img src={logoUrl} alt="Logo" className="h-8 w-auto object-contain" />
+              {config.logoUrl ? (
+                <img src={config.logoUrl} alt="Logo" className="h-8 w-auto object-contain" />
               ) : (
                 <GraduationCap className="h-8 w-8 text-primary" />
               )}
               <span className="font-bold text-xl tracking-tight text-gray-900">
-                ITI <span className="text-orange-500">Tech</span> Hub
+                {config.siteName}
               </span>
             </Link>
           </div>

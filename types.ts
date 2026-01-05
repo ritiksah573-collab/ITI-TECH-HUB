@@ -9,11 +9,16 @@ export interface Note {
 }
 
 export interface SiteConfig {
+  siteName: string;
   heroTitle: string;
   heroSubTitle: string;
   marqueeUpdates: string[];
   logoUrl?: string;
   primaryColor?: string;
+  aboutText?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  contactAddress?: string;
 }
 
 export interface AdminProfile {
@@ -34,7 +39,6 @@ export interface ChatMessage {
   text: string;
 }
 
-// Added Course interface to resolve build error in pages/Skills.tsx
 export interface Course {
   id: number;
   title: string;
@@ -45,7 +49,6 @@ export interface Course {
   image: string;
 }
 
-// Added ForumPost interface to resolve build error in pages/Community.tsx
 export interface ForumPost {
   id: number;
   author: string;

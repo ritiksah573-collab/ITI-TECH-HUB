@@ -2,27 +2,27 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
-// TODO: Replace with your actual Firebase project config from firebase.google.com
+/**
+ * YOUR REAL CLOUD CONFIG (CONNECTED TO 'itihubtech')
+ */
 const firebaseConfig = {
-  apiKey: "AIzaSyAs-PLACEHOLDER-YOUR-KEY",
-  authDomain: "iti-tech-hub.firebaseapp.com",
-  projectId: "iti-tech-hub",
-  storageBucket: "iti-tech-hub.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdefghij"
+  apiKey: "AIzaSyCkPc2YrJ2OVYYC3Qf1pe2eGHaDqTBMEqc",
+  authDomain: "itihubtech.firebaseapp.com",
+  projectId: "itihubtech",
+  storageBucket: "itihubtech.firebasestorage.app",
+  messagingSenderId: "257749155856",
+  appId: "1:257749155856:web:b74674b5100bb4d1b1ca95"
 };
 
-// If you don't have a Firebase project yet, the app will fall back to LocalStorage in dbService.ts
-let app;
 let db: any = null;
 
 try {
-    if (firebaseConfig.apiKey !== "AIzaSyAs-PLACEHOLDER-YOUR-KEY") {
-        app = initializeApp(firebaseConfig);
-        db = getFirestore(app);
-    }
+    // Initializing with your actual project credentials
+    const app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    console.log("🚀 ITI Tech Hub Cloud: Connected to itihubtech project.");
 } catch (e) {
-    console.error("Firebase Initialization Error:", e);
+    console.error("Firebase Connection Error:", e);
 }
 
 export { db };

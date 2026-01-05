@@ -3,28 +3,27 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, Briefcase, FileText, ChevronRight, Zap, GraduationCap } from 'lucide-react';
 import { SiteConfig } from '../types';
+import { dbService } from '../services/dbService';
+
+const DEFAULT_CONFIG: SiteConfig = {
+  heroTitle: "India’s Largest ITI Students Community",
+  heroSubTitle: "Access premium trade theory notes, NCVT papers, job alerts, and apprenticeships. Empowering your technical skill journey.",
+  marqueeUpdates: [
+    "🔥 Loading latest updates from Cloud...",
+  ]
+};
 
 const Home: React.FC = () => {
-  const [config, setConfig] = useState<SiteConfig>({
-    heroTitle: "India’s Largest ITI Students Community",
-    heroSubTitle: "Access premium trade theory notes, NCVT papers, job alerts, and apprenticeships. Empowering your technical skill journey.",
-    marqueeUpdates: [
-      "🔥 RRB ALP 2026 Notification Out (Technician Posts)",
-      "🚀 Tata Motors ITI Apprentice 2026 Applications Open",
-      "💼 DRDO CEPTAM-11 Technician-A Recruitment",
-      "🔧 Railway Apprentice 2026-27 Batches Announced"
-    ]
-  });
+  const [config, setConfig] = useState<SiteConfig>(DEFAULT_CONFIG);
 
   useEffect(() => {
-    const saved = localStorage.getItem('iti_site_config');
-    if (saved) {
-      try {
-        setConfig(JSON.parse(saved));
-      } catch (e) {
-        console.error("Home config parse error", e);
+    // Listen to real-time configuration changes from Firebase
+    const unsub = dbService.listenToConfig((cloudConfig) => {
+      if (cloudConfig) {
+        setConfig(cloudConfig);
       }
-    }
+    });
+    return () => unsub();
   }, []);
 
   const branches = [
@@ -48,8 +47,6 @@ const Home: React.FC = () => {
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
       <section className="relative text-white py-16 md:py-24 px-4 overflow-hidden">
-        
-        {/* Background Image & Overlay */}
         <div className="absolute inset-0 z-0">
           <img 
             src="https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=2070&auto=format&fit=crop" 
@@ -80,9 +77,9 @@ const Home: React.FC = () => {
       {/* Trending Ticker */}
       <div className="bg-orange-50 border-b border-orange-100 py-3 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 flex items-center">
-          <span className="bg-orange-500 text-white text-[10px] sm:text-xs font-bold px-2 py-1 rounded mr-3 shrink-0">LATEST UPDATES</span>
+          <span className="bg-orange-500 text-white text-[10px] sm:text-xs font-bold px-2 py-1 rounded mr-3 shrink-0 uppercase tracking-widest">Global Updates</span>
           <div className="whitespace-nowrap overflow-hidden relative flex-1">
-             <div className="animate-marquee inline-block text-orange-800 text-sm font-medium">
+             <div className="animate-marquee inline-block text-orange-800 text-sm font-black">
                 {config.marqueeUpdates.join(" ••• ")}
              </div>
           </div>
@@ -92,7 +89,7 @@ const Home: React.FC = () => {
       {/* Quick Access Grid */}
       <section className="py-12 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl md:text-5xl font-bold text-blue-600 text-center mb-10 font-['Caveat']">Everything You Must Need</h2>
+          <h2 className="text-4xl md:text-5xl font-bold text-blue-600 text-center mb-10 font-['Caveat']">Everything You Need</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 justify-center">
             {[
               { icon: BookOpen, label: 'Trade Notes', link: '/notes', color: 'text-blue-500' },
@@ -111,38 +108,11 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Popular Branches */}
-      <section className="py-12 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-end mb-8">
-            <div>
-               <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Popular ITI Trades</h2>
-               <p className="text-sm md:text-base text-gray-500 mt-1">Find resources specific to your trade</p>
-            </div>
-            <Link to="/notes" className="text-blue-600 font-medium text-sm md:text-base flex items-center hover:underline">
-              View All <ChevronRight size={16} />
-            </Link>
-          </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {branches.map((branch, idx) => (
-              <Link key={idx} to="/notes" className="block p-4 rounded-lg border border-gray-100 hover:border-blue-200 hover:shadow-md transition group">
-                <div className={`w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center text-xl mb-3 ${branch.color} group-hover:scale-110 transition-transform`}>
-                  {branch.icon}
-                </div>
-                <h3 className="font-semibold text-gray-900 text-sm md:text-base">{branch.name}</h3>
-                <p className="text-xs text-gray-500 mt-1">Theory & Practical</p>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* CTA Section */}
       <section className="py-16 bg-blue-50">
          <div className="max-w-5xl mx-auto px-4 text-center">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 md:mb-6">Join us on WhatsApp</h2>
-            <p className="text-gray-600 mb-8 max-w-2xl mx-auto text-sm md:text-base">Get instant updates about ITI exams, results, and job openings directly on your phone. Don't miss out!</p>
+            <p className="text-gray-600 mb-8 max-w-2xl mx-auto text-sm md:text-base">Get instant updates about ITI exams, results, and job openings directly on your phone.</p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <a 
                 href="https://whatsapp.com/channel/0029Vb7wcUmFCCoR6zDELM07" 

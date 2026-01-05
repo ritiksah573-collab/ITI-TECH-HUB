@@ -13,10 +13,14 @@ import {
   setDoc
 } from "firebase/firestore";
 
-const LOCAL_STORAGE_PREFIX = 'iti_hub_';
+const LOCAL_STORAGE_PREFIX = 'iti_hub_cloud_fallback_';
+
+// Global error handler for components to listen to
+export const onPermissionError = (callback: (error: boolean) => void) => {
+  window.addEventListener('firestore-permission-error', () => callback(true));
+};
 
 export const dbService = {
-  // Collection Names
   COLLECTIONS: {
     JOBS: 'jobs',
     EXAMS: 'exams',
@@ -28,10 +32,8 @@ export const dbService = {
     CONFIG: 'config'
   },
 
-  // Generic Listener for Real-time Updates
   listenToCollection: (collectionName: string, callback: (data: any[]) => void) => {
     if (!db) {
-      // Fallback to LocalStorage events for same-device sync
       const loadLocal = () => {
         const stored = localStorage.getItem(LOCAL_STORAGE_PREFIX + collectionName);
         callback(stored ? JSON.parse(stored) : []);
@@ -41,40 +43,59 @@ export const dbService = {
       return () => window.removeEventListener('storage', loadLocal);
     }
 
-    const q = query(collection(db, collectionName), orderBy('postedDate', 'desc'));
-    return onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      callback(data);
-      // Also sync to local storage for offline use
-      localStorage.setItem(LOCAL_STORAGE_PREFIX + collectionName, JSON.stringify(data));
-    });
+    try {
+      const q = query(collection(db, collectionName));
+      return onSnapshot(q, (snapshot) => {
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        callback(data);
+        localStorage.setItem(LOCAL_STORAGE_PREFIX + collectionName, JSON.stringify(data));
+      }, (error: any) => {
+        console.error(`Firestore Listen Error (${collectionName}):`, error);
+        if (error.code === 'permission-denied') {
+          window.dispatchEvent(new CustomEvent('firestore-permission-error'));
+        }
+      });
+    } catch (e) {
+      console.error("Query Error:", e);
+      return () => {};
+    }
   },
 
-  // Save or Update an item
   saveItem: async (collectionName: string, item: any) => {
+    const timestamp = new Date().toISOString();
+    
     if (!db) {
       const stored = localStorage.getItem(LOCAL_STORAGE_PREFIX + collectionName);
       const data = stored ? JSON.parse(stored) : [];
+      const newItem = { ...item, id: item.id || Date.now(), postedDate: item.postedDate || timestamp };
       const updated = item.id && data.find((i: any) => i.id === item.id)
-        ? data.map((i: any) => i.id === item.id ? item : i)
-        : [{ ...item, id: Date.now() }, ...data];
+        ? data.map((i: any) => i.id === item.id ? newItem : i)
+        : [newItem, ...data];
       localStorage.setItem(LOCAL_STORAGE_PREFIX + collectionName, JSON.stringify(updated));
       window.dispatchEvent(new Event('storage'));
       return;
     }
 
-    if (item.id && typeof item.id === 'string') {
-      const docRef = doc(db, collectionName, item.id);
-      await setDoc(docRef, item, { merge: true });
-    } else {
-      await addDoc(collection(db, collectionName), {
-        ...item,
-        postedDate: new Date().toISOString()
-      });
+    try {
+      if (item.id && typeof item.id === 'string') {
+        const docRef = doc(db, collectionName, item.id);
+        await setDoc(docRef, { ...item, updatedAt: timestamp }, { merge: true });
+      } else {
+        await addDoc(collection(db, collectionName), {
+          ...item,
+          postedDate: timestamp
+        });
+      }
+    } catch (e: any) {
+      console.error("Firestore Save Error:", e);
+      if (e.code === 'permission-denied') {
+        alert("Permission Denied: Go to Firebase Console > Firestore > Rules and set 'allow read, write: if true;'");
+      } else {
+        alert("Error saving to cloud. Check console for details.");
+      }
     }
   },
 
-  // Delete an item
   deleteItem: async (collectionName: string, id: string | number) => {
     if (!db) {
       const stored = localStorage.getItem(LOCAL_STORAGE_PREFIX + collectionName);
@@ -85,17 +106,24 @@ export const dbService = {
       return;
     }
 
-    await deleteDoc(doc(db, collectionName, id.toString()));
+    try {
+      await deleteDoc(doc(db, collectionName, id.toString()));
+    } catch (e) {
+      console.error("Firestore Delete Error:", e);
+    }
   },
 
-  // Site Config (Hero/Marquee)
   saveConfig: async (config: any) => {
     if (!db) {
       localStorage.setItem(LOCAL_STORAGE_PREFIX + 'config', JSON.stringify(config));
       window.dispatchEvent(new Event('storage'));
       return;
     }
-    await setDoc(doc(db, 'settings', 'siteConfig'), config);
+    try {
+      await setDoc(doc(db, 'settings', 'siteConfig'), config);
+    } catch (e) {
+      console.error("Config Save Error:", e);
+    }
   },
 
   listenToConfig: (callback: (config: any) => void) => {
@@ -106,6 +134,10 @@ export const dbService = {
     }
     return onSnapshot(doc(db, 'settings', 'siteConfig'), (snapshot) => {
       if (snapshot.exists()) callback(snapshot.data());
+    }, (error: any) => {
+      if (error.code === 'permission-denied') {
+        window.dispatchEvent(new CustomEvent('firestore-permission-error'));
+      }
     });
   }
 };

@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Award, ExternalLink, MapPin, Clock, AlertTriangle, FileText, Download, Filter } from 'lucide-react';
-
-const defaultExams: any[] = [
-  { id: 1, title: 'NCVT AITT CTS Annual Exam Time Table 2026', board: 'NCVT', state: 'All India', type: 'Schedule', date: 'July 2026', status: 'Upcoming', link: '#', description: 'Annual exam dates for 1st & 2nd Year trainees.' },
-  { id: 50, title: 'NCVT AITT Annual Result 2025', board: 'NCVT', state: 'All India', type: 'Result', date: 'Declared: 15 Aug 2025', status: 'Released', link: '#', description: 'Final results for Session 2023-25. Check Marksheet.' }
-];
+import { Calendar, Award, ExternalLink, MapPin, Clock, FileText, Loader2 } from 'lucide-react';
+import { dbService } from '../services/dbService';
 
 const ExamResults: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'Schedule' | 'Result'>('Schedule');
   const [selectedState, setSelectedState] = useState('All');
   const [exams, setExams] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const dynamicExams = JSON.parse(localStorage.getItem('dynamicExams') || '[]');
-    setExams([...dynamicExams, ...defaultExams]);
+    const unsub = dbService.listenToCollection('exams', (cloudExams) => {
+      setExams(cloudExams);
+      setLoading(false);
+    });
+    return () => unsub();
   }, []);
 
   const filteredData = exams.filter(item => {
@@ -22,12 +22,14 @@ const ExamResults: React.FC = () => {
     return typeMatch && stateMatch;
   });
 
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><Loader2 className="animate-spin text-blue-600" size={40} /></div>;
+
   return (
     <div className="bg-gray-50 min-h-screen py-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-10">
           <h1 className="text-3xl font-bold text-gray-900">Exams & Results</h1>
-          <p className="text-gray-600 mt-2">Official portal for ITI Time Tables and Results.</p>
+          <p className="text-gray-600 mt-2">Official portal for ITI Time Tables and Results (Cloud Synced).</p>
         </div>
 
         <div className="flex justify-center mb-8 gap-2">
@@ -54,6 +56,9 @@ const ExamResults: React.FC = () => {
                     </div>
                 </div>
             ))}
+            {filteredData.length === 0 && (
+              <div className="col-span-full py-20 text-center text-gray-400 font-bold">No active updates for {activeTab} at the moment.</div>
+            )}
         </div>
       </div>
     </div>

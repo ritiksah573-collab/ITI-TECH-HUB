@@ -1,22 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
-import { Search, FileText, Download, Eye, X, BookOpen, Zap, Wrench, Flame, Monitor, Truck, Settings, Ruler, Droplet, Wind, Radio, Scissors, Hammer } from 'lucide-react';
+import { Search, FileText, Download, Eye, BookOpen, Zap, Wrench, Flame, Monitor, Truck, Ruler, Droplet, Wind, Radio, Scissors, Hammer, Loader2 } from 'lucide-react';
 import { Note } from '../types';
-import { jsPDF } from "jspdf";
-
-const defaultNotes: Note[] = [
-  { id: 101, title: 'Electrician ट्रेड थ्योरी (प्रथम वर्ष)', subject: 'ट्रेड थ्योरी', branch: 'ITI Electrician', semester: '1st Year', downloadUrl: '#' },
-  { id: 102, title: 'Electrician ट्रेड थ्योरी (द्वितीय वर्ष)', subject: 'ट्रेड थ्योरी', branch: 'ITI Electrician', semester: '2nd Year', downloadUrl: '#' },
-  { id: 201, title: 'Fitter ट्रेड थ्योरी (प्रथम वर्ष)', subject: 'ट्रेड थ्योरी', branch: 'ITI Fitter', semester: '1st Year', downloadUrl: '#' },
-  { id: 1101, title: 'COPA ट्रेड थ्योरी (पूर्ण कोर्स)', subject: 'ट्रेड थ्योरी', branch: 'ITI COPA', semester: '1st Year', downloadUrl: '#' },
-  { id: 301, title: 'Welder Theory & Practical', subject: 'ट्रेड थ्योरी', branch: 'ITI Welder', semester: '1st Year', downloadUrl: '#' },
-  { id: 401, title: 'Diesel Mechanic Full Notes', subject: 'ट्रेड थ्योरी', branch: 'ITI Diesel Mechanic', semester: '1st Year', downloadUrl: '#' },
-];
+import { dbService } from '../services/dbService';
 
 const Notes: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBranch, setSelectedBranch] = useState('All');
   const [notes, setNotes] = useState<Note[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const tradeOptions = [
     "ITI Electrician", "ITI Fitter", "ITI COPA", "ITI Welder", "ITI Diesel Mechanic", 
@@ -27,15 +18,11 @@ const Notes: React.FC = () => {
   ];
 
   useEffect(() => {
-    try {
-      const storedNotes = localStorage.getItem('dynamicNotes');
-      const dynamicNotes = storedNotes ? JSON.parse(storedNotes) : [];
-      const safeDynamicNotes = Array.isArray(dynamicNotes) ? dynamicNotes : [];
-      setNotes([...safeDynamicNotes, ...defaultNotes]);
-    } catch (e) {
-      console.error("Error loading notes:", e);
-      setNotes(defaultNotes);
-    }
+    const unsub = dbService.listenToCollection('notes', (cloudNotes) => {
+      setNotes(cloudNotes);
+      setLoading(false);
+    });
+    return () => unsub();
   }, []);
 
   const filteredNotes = notes.filter(note => {
@@ -46,7 +33,7 @@ const Notes: React.FC = () => {
   });
 
   const getBranchIcon = (branch: string) => {
-    const b = branch.toLowerCase();
+    const b = (branch || "").toLowerCase();
     if (b.includes('fitter') || b.includes('turner') || b.includes('machinist')) return <Wrench size={14} />;
     if (b.includes('electrician') || b.includes('wireman')) return <Zap size={14} />;
     if (b.includes('copa') || b.includes('it')) return <Monitor size={14} />;
@@ -61,15 +48,7 @@ const Notes: React.FC = () => {
     return <BookOpen size={14} />;
   };
 
-  const getNoteContent = (note: Note): string => {
-    return `ITI TECH HUB - Premium Study Notes\nTitle: ${note.title}\nTrade: ${note.branch}\nSession: ${note.semester}\n\n[Full Trade Content Loading in App...]`;
-  };
-
-  const handleDownload = (note: Note) => {
-    const doc = new jsPDF();
-    doc.text(getNoteContent(note), 15, 20);
-    doc.save(`${note.title.replace(/\s+/g, '_')}.pdf`);
-  };
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-blue-600" size={40} /></div>;
 
   return (
     <div className="bg-gray-50 min-h-screen py-10">
@@ -110,15 +89,15 @@ const Notes: React.FC = () => {
               <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition">{note.title}</h3>
               <p className="text-sm text-gray-500 mb-4 flex-1">{note.subject}</p>
               <div className="flex gap-2 mt-auto">
-                <button className="flex-1 py-2 text-sm font-medium bg-gray-50 hover:bg-gray-100 rounded-lg transition flex items-center justify-center gap-2"><Eye size={16}/> View</button>
-                <button onClick={() => handleDownload(note)} className="flex-1 py-2 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition flex items-center justify-center gap-2 shadow-sm"><Download size={16}/> PDF</button>
+                <a href={note.downloadUrl || (note as any).link} target="_blank" className="flex-1 py-2 text-sm font-medium bg-gray-50 hover:bg-gray-100 rounded-lg transition flex items-center justify-center gap-2"><Eye size={16}/> View</a>
+                <a href={note.downloadUrl || (note as any).link} target="_blank" className="flex-1 py-2 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition flex items-center justify-center gap-2 shadow-sm"><Download size={16}/> PDF</a>
               </div>
             </div>
           ))}
           {filteredNotes.length === 0 && (
             <div className="col-span-full py-20 text-center text-gray-400">
                <FileText size={48} className="mx-auto mb-4 opacity-20" />
-               <p>No notes found for this trade yet. Check back later.</p>
+               <p>No notes found in Cloud Database. Check back later.</p>
             </div>
           )}
         </div>

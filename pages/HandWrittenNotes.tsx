@@ -1,19 +1,27 @@
 
 import React, { useState, useEffect } from 'react';
-import { PenTool, BookOpen, FileQuestion, Search, FolderOpen, Zap, Settings, Monitor, Truck, Flame, Wrench, Hammer, Compass, Ruler, Scissors, Droplet, Download, Eye, FileText, HelpCircle, ArrowLeft, ChevronRight, AlertTriangle, Shield, CheckCircle, Info, XCircle, HeartPulse, Stethoscope, Calculator, Clock } from 'lucide-react';
-import { jsPDF } from "jspdf";
+import { PenTool, BookOpen, FileQuestion, Search, FolderOpen, Zap, Settings, Monitor, Truck, Flame, Wrench, Hammer, Compass, Ruler, Scissors, Droplet, Download, Eye, FileText, HelpCircle, ArrowLeft, ChevronRight, AlertTriangle, Shield, CheckCircle, Info, XCircle, HeartPulse, Stethoscope, Calculator, Clock, Wind, Radio } from 'lucide-react';
 
-// Default Trades for initial view
 const defaultTrades = [
   { id: 'electrician', name: 'Electrician 1st Year', icon: Zap, color: 'text-yellow-600 bg-yellow-50' },
   { id: 'fitter', name: 'Fitter 1st Year', icon: Wrench, color: 'text-orange-600 bg-orange-50' }, 
   { id: 'copa', name: 'COPA 1st Year', icon: Monitor, color: 'text-purple-600 bg-purple-50' },
+  { id: 'welder', name: 'ITI Welder', icon: Flame, color: 'text-red-600 bg-red-50' },
+  { id: 'diesel', name: 'Diesel Mechanic', icon: Truck, color: 'text-green-600 bg-green-50' },
+  { id: 'mmv', name: 'Motor Mechanic', icon: Settings, color: 'text-blue-600 bg-blue-50' },
+  { id: 'wireman', name: 'ITI Wireman', icon: Zap, color: 'text-yellow-700 bg-yellow-100' },
+  { id: 'turner', name: 'ITI Turner', icon: Settings, color: 'text-gray-600 bg-gray-50' },
+  { id: 'machinist', name: 'ITI Machinist', icon: Wrench, color: 'text-slate-600 bg-slate-50' },
+  { id: 'draughtsman-c', name: 'Draughtsman Civil', icon: Ruler, color: 'text-cyan-600 bg-cyan-50' },
+  { id: 'electronics', name: 'Electronics Mech', icon: Radio, color: 'text-purple-700 bg-purple-50' },
+  { id: 'rac', name: 'ITI RAC', icon: Wind, color: 'text-sky-600 bg-sky-50' },
+  { id: 'plumber', name: 'ITI Plumber', icon: Droplet, color: 'text-teal-600 bg-teal-50' },
+  { id: 'carpenter', name: 'ITI Carpenter', icon: Hammer, color: 'text-amber-600 bg-amber-50' },
   { id: 'eng-drawing', name: 'Engineering Drawing', icon: Ruler, color: 'text-indigo-700 bg-indigo-50' },
   { id: 'workshop-calc', name: 'Workshop Science', icon: Calculator, color: 'text-emerald-700 bg-emerald-50' },
 ];
 
 const HandWrittenNotes: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'Notes' | 'Questions'>('Notes');
   const [selectedTrade, setSelectedTrade] = useState<string | null>(null);
   const [dynamicNotes, setDynamicNotes] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -30,8 +38,6 @@ const HandWrittenNotes: React.FC = () => {
     return () => window.removeEventListener('storage', loadData);
   }, []);
 
-  // Extract unique trades from dynamic data
-  // Fix: Convert trade to string and cast Array.from result to string[] to avoid 'unknown' type issues
   const dynamicTrades = (Array.from(new Set(dynamicNotes.map(n => String(n.trade || '')))) as string[])
     .filter(name => name.length > 0)
     .map(name => ({
@@ -117,11 +123,9 @@ const HandWrittenNotes: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {/* Fix: Cast t.name to string to resolve 'unknown' type error in toLowerCase() */}
             {allTrades.filter(t => (t.name as string).toLowerCase().includes(searchTerm.toLowerCase())).map((trade) => (
                 <div 
                   key={trade.id} 
-                  /* Fix: Cast trade.name to string to match handleTradeClick expected parameter type */
                   onClick={() => handleTradeClick(trade.name as string)}
                   className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-200 transition group cursor-pointer flex flex-col items-center text-center relative overflow-hidden"
                 >

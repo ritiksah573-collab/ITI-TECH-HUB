@@ -1,5 +1,6 @@
-import React, { Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+
+import React from 'react';
+import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import MobileNav from './components/MobileNav';
 import Footer from './components/Footer';
@@ -29,9 +30,9 @@ const App: React.FC = () => {
           <Route path="/admin" element={<Login />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
 
-          {/* Public Routes - With Navbar/Footer */}
+          {/* Public Routes - Wrapped in Layout */}
           <Route
-            path="*"
+            path="/*"
             element={
               <>
                 <Navbar />
@@ -49,7 +50,7 @@ const App: React.FC = () => {
                     <Route path="/about" element={<About />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/aibuddy" element={<AIBuddy />} />
-                    {/* Fallback for any unknown route */}
+                    {/* Fallback for any unknown route inside the public area */}
                     <Route path="*" element={<Home />} />
                   </Routes>
                 </main>

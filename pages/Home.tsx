@@ -30,12 +30,18 @@ const Home: React.FC = () => {
   const branches = [
     { name: 'ITI Electrician', icon: '🔌', color: 'bg-yellow-50 text-yellow-700' },
     { name: 'ITI Fitter', icon: '🔧', color: 'bg-orange-100 text-orange-600' },
-    { name: 'ITI Welder', icon: '🔥', color: 'bg-red-100 text-red-600' },
     { name: 'ITI COPA', icon: '🖥️', color: 'bg-indigo-100 text-indigo-600' },
+    { name: 'ITI Welder', icon: '🔥', color: 'bg-red-100 text-red-600' },
     { name: 'Diesel Mechanic', icon: '🚛', color: 'bg-green-100 text-green-700' },
     { name: 'Motor Mechanic', icon: '🚗', color: 'bg-blue-100 text-blue-600' },
-    { name: 'Wireman', icon: '⚡', color: 'bg-yellow-100 text-yellow-600' },
-    { name: 'Turner', icon: '⚙️', color: 'bg-gray-100 text-gray-700' },
+    { name: 'ITI Wireman', icon: '⚡', color: 'bg-yellow-100 text-yellow-600' },
+    { name: 'ITI Turner', icon: '⚙️', color: 'bg-gray-100 text-gray-700' },
+    { name: 'ITI Machinist', icon: '🔩', color: 'bg-slate-100 text-slate-700' },
+    { name: 'Draughtsman Civil', icon: '🏢', color: 'bg-cyan-100 text-cyan-700' },
+    { name: 'Electronics Mech', icon: '📻', color: 'bg-purple-100 text-purple-700' },
+    { name: 'ITI Plumber', icon: '🚿', color: 'bg-teal-100 text-teal-700' },
+    { name: 'ITI Carpenter', icon: '🪚', color: 'bg-amber-100 text-amber-700' },
+    { name: 'ITI RAC', icon: '❄️', color: 'bg-sky-100 text-sky-700' },
   ];
 
   return (

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import MobileNav from './components/MobileNav';
 import Footer from './components/Footer';
@@ -50,7 +50,6 @@ const App: React.FC = () => {
                     <Route path="/about" element={<About />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/aibuddy" element={<AIBuddy />} />
-                    {/* Fallback for any unknown route inside the public area */}
                     <Route path="*" element={<Home />} />
                   </Routes>
                 </main>

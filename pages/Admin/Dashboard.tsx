@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, Briefcase, LogOut, Plus, Trash2, Edit, X, Database, 
@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { SiteConfig } from '../../types';
 import { dbService, onPermissionError } from '../../services/dbService';
+import { db } from '../../services/firebase';
 
 const DEFAULT_CONFIG: SiteConfig = {
   heroTitle: "India’s Largest ITI Students Community",
@@ -27,7 +28,6 @@ const AdminDashboard = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [lastSaved, setLastSaved] = useState<string>('');
-  const [isCloudActive, setIsCloudActive] = useState(false);
   const [permissionError, setPermissionError] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
@@ -53,10 +53,6 @@ const AdminDashboard = () => {
     });
     unsubscribers.push(unsubConfig);
 
-    import('../../services/firebase').then(fb => {
-        setIsCloudActive(!!fb.db);
-    });
-
     return () => unsubscribers.forEach(u => u());
   }, [navigate]);
 
@@ -65,7 +61,7 @@ const AdminDashboard = () => {
     await dbService.deleteItem(activeTab, id);
   };
 
-  const handleSaveItem = async (e: any) => {
+  const handleSaveItem = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const item: any = editingItem ? { ...editingItem } : { status: 'Live' };
@@ -98,7 +94,6 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
       <aside className="w-64 bg-slate-900 text-white flex flex-col fixed inset-y-0 z-50">
         <div className="p-6 border-b border-slate-800 flex items-center gap-2">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold">A</div>
@@ -130,13 +125,12 @@ const AdminDashboard = () => {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 ml-64 min-h-screen flex flex-col">
         <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-8 sticky top-0 z-40">
           <h1 className="text-lg font-bold text-slate-800 capitalize">{activeTab} Management</h1>
           <div className="flex items-center gap-3">
-             <div className={`px-3 py-1 ${isCloudActive ? (permissionError ? 'bg-red-50 text-red-700 border-red-100' : 'bg-green-50 text-green-700 border-green-100') : 'bg-orange-50 text-orange-700 border-orange-100'} text-[10px] font-black rounded-full border uppercase`}>
-                {permissionError ? 'Permission Denied (Check Rules)' : isCloudActive ? 'Cloud Online' : 'Local Sandbox'}
+             <div className={`px-3 py-1 ${db ? (permissionError ? 'bg-red-50 text-red-700 border-red-100' : 'bg-green-50 text-green-700 border-green-100') : 'bg-orange-50 text-orange-700 border-orange-100'} text-[10px] font-black rounded-full border uppercase`}>
+                {permissionError ? 'Permission Denied (Check Rules)' : db ? 'Cloud Online' : 'Connecting...'}
              </div>
              <span className="text-xs text-gray-400">Sync: {lastSaved}</span>
           </div>
@@ -147,7 +141,7 @@ const AdminDashboard = () => {
              <div className="p-4 bg-red-100 text-red-600 rounded-2xl"><ShieldAlert size={40} /></div>
              <div className="flex-1">
                 <h2 className="text-xl font-black text-red-800 mb-2">Cloud Database Error: Permissions Denied</h2>
-                <p className="text-red-700 mb-4 font-medium">Aapka Firestore locked hai. Ise theek karne ke liye Firebase Console mein niche diye gaye rules copy karke **Firestore > Rules** mein paste karein:</p>
+                <p className="text-red-700 mb-4 font-medium">Your Firestore is locked. To fix this, copy the rules below and paste them into your **Firebase Console > Firestore > Rules**:</p>
                 <div className="bg-slate-900 rounded-2xl p-4 relative group">
                    <pre className="text-blue-300 text-xs font-mono overflow-x-auto">
 {`rules_version = '2';

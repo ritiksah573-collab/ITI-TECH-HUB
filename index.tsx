@@ -1,6 +1,8 @@
 
-// Process polyfill MUST be at the very top
+
+// Process polyfill for browser compatibility
 if (typeof window !== 'undefined') {
+  // Fix: Cast window to any to avoid TypeScript error about missing 'process' property
   (window as any).process = (window as any).process || { env: {} };
 }
 

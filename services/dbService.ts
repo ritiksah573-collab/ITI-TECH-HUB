@@ -1,103 +1,83 @@
-
-import { db } from './firebase';
 import { 
   collection, 
   addDoc, 
+  updateDoc, 
   deleteDoc, 
   doc, 
-  onSnapshot,
-  query,
+  onSnapshot, 
+  query, 
+  orderBy, 
   setDoc,
-  enableIndexedDbPersistence
+  getDoc
 } from "firebase/firestore";
-
-// Global error handler for components to listen to
-export const onPermissionError = (callback: (error: boolean) => void) => {
-  window.addEventListener('firestore-permission-error', () => callback(true));
-};
+import { db } from "./firebase";
 
 export const dbService = {
-  COLLECTIONS: {
-    JOBS: 'jobs',
-    EXAMS: 'exams',
-    SCHOLARSHIPS: 'scholarships',
-    ADMISSIONS: 'admissions',
-    HANDWRITTEN: 'handwritten',
-    MACHINES: 'machines',
-    PYQS: 'pyqs',
-    CONFIG: 'config'
-  },
-
+  // Listen to any collection (Jobs, Admissions, etc.) in real-time
   listenToCollection: (collectionName: string, callback: (data: any[]) => void) => {
     if (!db) return () => {};
-
-    try {
-      const q = query(collection(db, collectionName));
-      return onSnapshot(q, (snapshot) => {
-        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        callback(data);
-      }, (error: any) => {
-        console.error(`Firestore Listen Error (${collectionName}):`, error);
-        if (error.code === 'permission-denied') {
-          window.dispatchEvent(new CustomEvent('firestore-permission-error'));
-        }
-      });
-    } catch (e) {
-      console.error("Query Error:", e);
-      return () => {};
-    }
+    
+    const q = query(collection(db, collectionName));
+    return onSnapshot(q, (snapshot) => {
+      const items = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      callback(items);
+    }, (error) => {
+      console.error(`Error listening to ${collectionName}:`, error);
+      callback([]);
+    });
   },
 
+  // Save or Update an item
   saveItem: async (collectionName: string, item: any) => {
-    if (!db) {
-      alert("Database is initializing. Please wait...");
-      return;
-    }
-
-    const timestamp = new Date().toISOString();
+    if (!db) return;
     try {
-      if (item.id && typeof item.id === 'string') {
-        const docRef = doc(db, collectionName, item.id);
-        await setDoc(docRef, { ...item, updatedAt: timestamp }, { merge: true });
+      if (item.id) {
+        // Update existing
+        const docRef = doc(db, collectionName, String(item.id));
+        const { id, ...data } = item;
+        await updateDoc(docRef, data);
       } else {
+        // Create new
         await addDoc(collection(db, collectionName), {
           ...item,
-          postedDate: timestamp
+          createdAt: new Date().toISOString()
         });
       }
-    } catch (e: any) {
-      console.error("Save Error:", e);
-      if (e.code === 'permission-denied') {
-        alert("Permission Denied: Ensure Firebase Rules are set to 'allow read, write: if true;'");
-      }
+      return { success: true };
+    } catch (e) {
+      console.error("Firebase Save Error:", e);
+      return { success: false };
     }
   },
 
+  // Delete an item
   deleteItem: async (collectionName: string, id: string | number) => {
     if (!db) return;
     try {
-      await deleteDoc(doc(db, collectionName, id.toString()));
+      await deleteDoc(doc(db, collectionName, String(id)));
     } catch (e) {
-      console.error("Delete Error:", e);
+      console.error("Firebase Delete Error:", e);
     }
   },
 
-  saveConfig: async (config: any) => {
-    if (!db) return;
-    try {
-      await setDoc(doc(db, 'settings', 'siteConfig'), config);
-    } catch (e) {
-      console.error("Config Error:", e);
-    }
-  },
-
+  // Listen to site-wide config (Hero Title, Marquee)
   listenToConfig: (callback: (config: any) => void) => {
     if (!db) return () => {};
-    return onSnapshot(doc(db, 'settings', 'siteConfig'), (snapshot) => {
-      if (snapshot.exists()) callback(snapshot.data());
-    }, (error: any) => {
-      if (error.code === 'permission-denied') {
-        window.dispatchEvent(new CustomEvent('firestore-permission-error'));
+    
+    const docRef = doc(db, "settings", "siteConfig");
+    return onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        callback(docSnap.data());
+      } else {
+        // Default if not exists
+        callback({
+          heroTitle: "India’s Largest ITI Students Community",
+          heroSubTitle: "Access premium trade theory notes and job alerts.",
+          marqueeUpdates: ["Welcome to ITI Tech Hub Cloud!"]
+        });
       }
     });
   }

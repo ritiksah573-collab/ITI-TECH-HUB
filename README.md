@@ -1,16 +1,28 @@
-# ITI Tech Hub - VS Code Setup
+# ITI Tech Hub - Hostinger Deployment Guide
 
-To run this website in your VS Code:
+## Step 1: Database Setup
+1. Log in to **Hostinger hPanel**.
+2. Go to **Databases > MySQL Databases**.
+3. Create a new database and user. Note down the **DB Name, Username, and Password**.
+4. Click on **Enter phpMyAdmin**.
+5. Select your database, go to the **SQL** tab, paste the contents of `DATABASE_SETUP.sql`, and click **Go**.
 
-1. Open the project folder in VS Code.
-2. Open the terminal (Ctrl + `).
-3. Run `npm install` to install all libraries.
-4. Create a `.env` file in the root folder and add:
-   `VITE_API_KEY=your_gemini_api_key_here`
-5. Run `npm run dev`.
-6. Click the link (usually http://localhost:5173) to see your site!
+## Step 2: Configure API
+1. Open `api.php`.
+2. Update the database credentials at the top of the file:
+   ```php
+   $db_name = 'your_hostinger_db_name';
+   $username = 'your_hostinger_username';
+   $password = 'your_password';
+   ```
 
-### Features:
-- **Instant AIBuddy**: Uses streaming for 1-second replies.
-- **Auto-Read**: AI reads the answer as it types.
-- **Notes & PYQs**: Full ITI trade resources.
+## Step 3: Build & Upload
+1. Run `npm run build` in your local terminal.
+2. Open the `dist` folder.
+3. Upload all files inside `dist` to Hostinger's `public_html` via File Manager or FTP.
+4. Also upload `api.php` and `.htaccess` to the **root** of `public_html`.
+
+## Step 4: AI Key
+Ensure your `VITE_API_KEY` is set in your environment or injected during build so AIBuddy continues to work.
+
+Your site is now running on a professional PHP/MySQL backend on Hostinger!

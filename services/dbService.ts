@@ -7,7 +7,6 @@ import {
   doc, 
   onSnapshot, 
   query, 
-  orderBy, 
   setDoc,
   getDoc
 } from "firebase/firestore";
@@ -17,26 +16,23 @@ export const dbService = {
   listenToCollection: (collectionName: string, callback: (data: any[]) => void) => {
     if (!db) return () => {};
     
-    // Attempting a sorted query
-    const q = query(collection(db, collectionName), orderBy("createdAt", "desc"));
+    // We remove orderBy because Firestore hides documents that are missing the ordered field.
+    // We will fetch everything and sort in JS for maximum reliability.
+    const q = query(collection(db, collectionName));
     
     return onSnapshot(q, (snapshot) => {
       const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      // Manual safe sort
+      items.sort((a: any, b: any) => {
+        const dateA = a.createdAt || "";
+        const dateB = b.createdAt || "";
+        return dateB.localeCompare(dateA);
+      });
+      
       callback(items);
     }, (error) => {
       console.error(`Error listening to ${collectionName}:`, error);
-      // Fallback: If orderBy fails (e.g. missing index or missing fields), try simple fetch
-      const fallbackQ = query(collection(db, collectionName));
-      onSnapshot(fallbackQ, (snapshot) => {
-        const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        // Manual sort as fallback
-        items.sort((a: any, b: any) => {
-          const dateA = a.createdAt || a.updatedAt || "";
-          const dateB = b.createdAt || b.updatedAt || "";
-          return dateB.localeCompare(dateA);
-        });
-        callback(items);
-      });
     });
   },
 
@@ -47,11 +43,10 @@ export const dbService = {
       if (item.id) {
         const docRef = doc(db, collectionName, String(item.id));
         const { id, ...data } = item;
-        // Ensure createdAt is NEVER lost during updates
         await setDoc(docRef, { 
           ...data, 
           updatedAt: timestamp,
-          createdAt: data.createdAt || timestamp // Fallback if somehow missing
+          createdAt: data.createdAt || timestamp 
         }, { merge: true });
       } else {
         await addDoc(collection(db, collectionName), {

@@ -5,7 +5,7 @@ import {
   Briefcase, LogOut, Plus, Trash2, Edit, X, Database, 
   IndianRupee, Home as HomeIcon, MonitorPlay, FileText, 
   PenTool, FileSignature, Calendar, Globe, Loader2, Save, Settings, Info,
-  Mail, Palette, UserCircle, Image as ImageIcon, Layout
+  Mail, Palette, UserCircle, Image as ImageIcon, Layout, CheckCircle2
 } from 'lucide-react';
 import { dbService } from '../../services/dbService';
 
@@ -16,6 +16,7 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
 
   useEffect(() => {
     const auth = localStorage.getItem('isAdminAuthenticated');
@@ -51,30 +52,42 @@ const AdminDashboard = () => {
 
   const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setSaveStatus('saving');
     const formData = new FormData(e.currentTarget);
     
-    // CRITICAL FIX: Preserve the original item data (like createdAt) when editing
     const item: any = editingItem ? { ...editingItem } : {};
     
     formData.forEach((value, key) => { 
       if (key === 'marqueeUpdates' && typeof value === 'string') {
         item[key] = value.split(',').map(s => s.trim()).filter(s => s !== "");
       } else {
-        item[key] = value; 
+        // Trim strings to avoid hidden spaces breaking filters
+        item[key] = typeof value === 'string' ? value.trim() : value; 
       }
     });
     
+    let res;
     if (activeTab === 'siteConfig') {
-      await dbService.saveItem('settings', { ...item, id: 'siteConfig' });
+      res = await dbService.saveItem('settings', { ...item, id: 'siteConfig' });
     } else if (activeTab === 'profile') {
       await dbService.saveAdminProfile(item);
+      res = { success: true };
     } else {
-      await dbService.saveItem(activeTab, item);
+      res = await dbService.saveItem(activeTab, item);
     }
     
-    setShowModal(false);
-    setEditingItem(null);
-    loadData();
+    if (res?.success) {
+      setSaveStatus('success');
+      setTimeout(() => {
+        setShowModal(false);
+        setEditingItem(null);
+        setSaveStatus('idle');
+        loadData();
+      }, 1000);
+    } else {
+      setSaveStatus('error');
+      alert("Failed to save to Cloud. Check connection.");
+    }
   };
 
   const menuItems = [
@@ -114,7 +127,7 @@ const AdminDashboard = () => {
       case 'exams':
         return [
           { name: 'title', label: 'Exam/Result Title', type: 'text' },
-          { name: 'type', label: 'Category', type: 'select', options: ['Schedule', 'Result'] },
+          { name: 'type', label: 'Category (Must match Tab)', type: 'select', options: ['Schedule', 'Result'] },
           { name: 'state', label: 'State Name', type: 'text' },
           { name: 'board', label: 'Board Name (e.g. NCVT)', type: 'text' },
           { name: 'date', label: 'Date/Year', type: 'text' },
@@ -237,27 +250,42 @@ const AdminDashboard = () => {
               <button type="button" onClick={() => setShowModal(false)} className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-400 hover:text-red-500 transition"><X size={20}/></button>
             </div>
             <div className="p-8 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {getFormFields().map((field) => (
-                  <div key={field.name} className={field.type === 'textarea' || field.name === 'heroTitle' || field.name === 'marqueeUpdates' || field.name === 'logoUrl' || field.name === 'siteName' ? 'md:col-span-2' : ''}>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">{field.label}</label>
-                    {field.type === 'textarea' ? (
-                      <textarea name={field.name} defaultValue={editingItem?.[field.name] || ''} required rows={3} className="w-full bg-slate-50 border-2 border-transparent rounded-2xl p-4 outline-none focus:border-blue-500 focus:bg-white transition-all font-medium" />
-                    ) : field.type === 'select' ? (
-                      <select name={field.name} defaultValue={editingItem?.[field.name] || field.options?.[0]} className="w-full bg-slate-50 border-2 border-transparent rounded-2xl p-4 outline-none focus:border-blue-500 focus:bg-white transition-all font-bold text-slate-800">
-                        {field.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                      </select>
-                    ) : (
-                      <input name={field.name} defaultValue={field.name === 'marqueeUpdates' && Array.isArray(editingItem?.[field.name]) ? editingItem[field.name].join(', ') : (editingItem?.[field.name] || '')} required className="w-full bg-slate-50 border-2 border-transparent rounded-2xl p-4 outline-none focus:border-blue-500 focus:bg-white transition-all font-bold text-slate-800" />
-                    )}
+              {saveStatus === 'success' ? (
+                <div className="py-20 flex flex-col items-center justify-center text-center">
+                  <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6 animate-bounce">
+                    <CheckCircle2 size={40} />
                   </div>
-                ))}
+                  <h3 className="text-2xl font-black text-slate-900">Success!</h3>
+                  <p className="text-slate-500 font-bold">Changes pushed to ITI Hub Cloud.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {getFormFields().map((field) => (
+                    <div key={field.name} className={field.type === 'textarea' || field.name === 'heroTitle' || field.name === 'marqueeUpdates' || field.name === 'logoUrl' || field.name === 'siteName' ? 'md:col-span-2' : ''}>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">{field.label}</label>
+                      {field.type === 'textarea' ? (
+                        <textarea name={field.name} defaultValue={editingItem?.[field.name] || ''} required rows={3} className="w-full bg-slate-50 border-2 border-transparent rounded-2xl p-4 outline-none focus:border-blue-500 focus:bg-white transition-all font-medium" />
+                      ) : field.type === 'select' ? (
+                        <select name={field.name} defaultValue={editingItem?.[field.name] || field.options?.[0]} className="w-full bg-slate-50 border-2 border-transparent rounded-2xl p-4 outline-none focus:border-blue-500 focus:bg-white transition-all font-bold text-slate-800">
+                          {field.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                        </select>
+                      ) : (
+                        <input name={field.name} defaultValue={field.name === 'marqueeUpdates' && Array.isArray(editingItem?.[field.name]) ? editingItem[field.name].join(', ') : (editingItem?.[field.name] || '')} required className="w-full bg-slate-50 border-2 border-transparent rounded-2xl p-4 outline-none focus:border-blue-500 focus:bg-white transition-all font-bold text-slate-800" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            {saveStatus !== 'success' && (
+              <div className="px-8 py-6 bg-slate-50 border-t flex justify-end gap-4">
+                <button type="button" onClick={() => setShowModal(false)} className="px-6 py-3 text-slate-400 font-black text-sm">Cancel</button>
+                <button type="submit" disabled={saveStatus === 'saving'} className="px-10 py-3 bg-blue-600 text-white text-sm font-black rounded-2xl shadow-xl hover:bg-blue-700 transition-all flex items-center gap-2">
+                  {saveStatus === 'saving' ? <Loader2 size={18} className="animate-spin" /> : <Save size={18}/>}
+                  {saveStatus === 'saving' ? 'Saving...' : 'Push Updates'}
+                </button>
               </div>
-            </div>
-            <div className="px-8 py-6 bg-slate-50 border-t flex justify-end gap-4">
-              <button type="button" onClick={() => setShowModal(false)} className="px-6 py-3 text-slate-400 font-black text-sm">Cancel</button>
-              <button type="submit" className="px-10 py-3 bg-blue-600 text-white text-sm font-black rounded-2xl shadow-xl hover:bg-blue-700 transition-all flex items-center gap-2"><Save size={18}/> Push Updates</button>
-            </div>
+            )}
           </form>
         </div>
       )}

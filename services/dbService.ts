@@ -30,9 +30,10 @@ export const dbService = {
     if (!db) return;
     try {
       if (item.id) {
+        // Use setDoc with merge: true so it works even if the document doesn't exist yet
         const docRef = doc(db, collectionName, String(item.id));
         const { id, ...data } = item;
-        await updateDoc(docRef, { ...data, updatedAt: new Date().toISOString() });
+        await setDoc(docRef, { ...data, updatedAt: new Date().toISOString() }, { merge: true });
       } else {
         await addDoc(collection(db, collectionName), {
           ...item,
@@ -60,9 +61,11 @@ export const dbService = {
     const docRef = doc(db, "settings", "siteConfig");
     return onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
-        callback(docSnap.data());
+        callback({ id: 'siteConfig', ...docSnap.data() });
       } else {
         callback({
+          id: 'siteConfig',
+          siteName: "ITI Tech Hub",
           heroTitle: "India’s Largest ITI Students Community",
           heroSubTitle: "Access premium trade theory notes.",
           marqueeUpdates: ["Welcome to ITI Tech Hub Cloud!"],
@@ -85,6 +88,6 @@ export const dbService = {
   saveAdminProfile: async (profile: any) => {
     if (!db) return;
     const docRef = doc(db, "settings", "adminProfile");
-    await setDoc(docRef, profile);
+    await setDoc(docRef, profile, { merge: true });
   }
 };

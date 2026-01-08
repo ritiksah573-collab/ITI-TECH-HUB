@@ -89,8 +89,9 @@ const Notes: React.FC = () => {
               <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition">{note.title}</h3>
               <p className="text-sm text-gray-500 mb-4 flex-1">{note.subject}</p>
               <div className="flex gap-2 mt-auto">
-                <a href={note.downloadUrl || (note as any).link} target="_blank" className="flex-1 py-2 text-sm font-medium bg-gray-50 hover:bg-gray-100 rounded-lg transition flex items-center justify-center gap-2"><Eye size={16}/> View</a>
-                <a href={note.downloadUrl || (note as any).link} target="_blank" className="flex-1 py-2 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition flex items-center justify-center gap-2 shadow-sm"><Download size={16}/> PDF</a>
+                {/* Fix: Directly access properties from updated Note interface */}
+                <a href={note.downloadUrl || note.link} target="_blank" className="flex-1 py-2 text-sm font-medium bg-gray-50 hover:bg-gray-100 rounded-lg transition flex items-center justify-center gap-2"><Eye size={16}/> View</a>
+                <a href={note.downloadUrl || note.link} target="_blank" className="flex-1 py-2 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition flex items-center justify-center gap-2 shadow-sm"><Download size={16}/> PDF</a>
               </div>
             </div>
           ))}

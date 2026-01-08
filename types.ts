@@ -6,6 +6,8 @@ export interface Note {
   branch: string;
   semester: string;
   link: string;
+  // Added to support direct PDF download links from cloud database
+  downloadUrl?: string;
 }
 
 export interface SiteConfig {

@@ -56,13 +56,14 @@ const AdminDashboard = () => {
     
     formData.forEach((value, key) => { 
       if (key === 'marqueeUpdates' && typeof value === 'string') {
-        item[key] = value.split(',').map(s => s.trim());
+        item[key] = value.split(',').map(s => s.trim()).filter(s => s !== "");
       } else {
         item[key] = value; 
       }
     });
     
     if (activeTab === 'siteConfig') {
+      // Force the correct ID for site configuration
       await dbService.saveItem('settings', { ...item, id: 'siteConfig' });
     } else if (activeTab === 'profile') {
       await dbService.saveAdminProfile(item);
@@ -109,6 +110,16 @@ const AdminDashboard = () => {
           { name: 'username', label: 'Login Username', type: 'text' },
           { name: 'password', label: 'New Password', type: 'text' }
         ];
+      case 'exams':
+        return [
+          { name: 'title', label: 'Exam/Result Title', type: 'text' },
+          { name: 'type', label: 'Category (Must be: Schedule OR Result)', type: 'select', options: ['Schedule', 'Result'] },
+          { name: 'state', label: 'State Name', type: 'text' },
+          { name: 'board', label: 'Board Name (e.g. NCVT)', type: 'text' },
+          { name: 'date', label: 'Date/Year', type: 'text' },
+          { name: 'description', label: 'Short Description', type: 'textarea' },
+          { name: 'link', label: 'Official Link URL', type: 'text' }
+        ];
       case 'jobs':
         return [
           { name: 'title', label: 'Job Title', type: 'text' },
@@ -123,6 +134,27 @@ const AdminDashboard = () => {
            { name: 'branch', label: 'Trade (ITI Electrician, etc)', type: 'text' },
            { name: 'semester', label: 'Semester/Year', type: 'text' },
            { name: 'link', label: 'PDF Link', type: 'text' }
+        ];
+      case 'admissions':
+        return [
+          { name: 'examName', label: 'Admission/Exam Name', type: 'text' },
+          { name: 'state', label: 'State', type: 'text' },
+          { name: 'startDate', label: 'Start Date', type: 'text' },
+          { name: 'applyLink', label: 'Apply Link URL', type: 'text' }
+        ];
+      case 'handwritten':
+        return [
+          { name: 'title', label: 'Notes Title', type: 'text' },
+          { name: 'subject', label: 'Subject', type: 'text' },
+          { name: 'trade', label: 'Trade Name', type: 'text' },
+          { name: 'link', label: 'PDF Link', type: 'text' }
+        ];
+      case 'scholarships':
+        return [
+          { name: 'name', label: 'Scholarship Name', type: 'text' },
+          { name: 'provider', label: 'Provider Name', type: 'text' },
+          { name: 'amount', label: 'Benefit/Amount', type: 'text' },
+          { name: 'applyLink', label: 'Apply Link URL', type: 'text' }
         ];
       default:
         return [
@@ -214,7 +246,7 @@ const AdminDashboard = () => {
                     <tr key={item.id} className="hover:bg-slate-50 transition">
                       <td className="px-8 py-5">
                         <div className="font-black text-slate-900 text-lg">{item.title || item.name || item.examName}</div>
-                        <div className="text-xs text-slate-400 font-bold uppercase mt-1">{item.company || item.subject || item.branch || item.state}</div>
+                        <div className="text-xs text-slate-400 font-bold uppercase mt-1">{item.company || item.subject || item.branch || item.state || item.type}</div>
                       </td>
                       <td className="px-8 py-5 text-right flex justify-end gap-3">
                         <button onClick={() => { setEditingItem(item); setShowModal(true); }} className="p-2.5 text-blue-600 hover:bg-blue-50 rounded-xl transition"><Edit size={20}/></button>
@@ -248,8 +280,12 @@ const AdminDashboard = () => {
                     <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">{field.label}</label>
                     {field.type === 'textarea' ? (
                       <textarea name={field.name} defaultValue={editingItem?.[field.name]} required rows={3} className="w-full bg-slate-50 border-2 border-transparent rounded-2xl p-4 outline-none focus:border-blue-500 focus:bg-white transition-all font-medium" />
+                    ) : field.type === 'select' ? (
+                      <select name={field.name} defaultValue={editingItem?.[field.name] || field.options?.[0]} className="w-full bg-slate-50 border-2 border-transparent rounded-2xl p-4 outline-none focus:border-blue-500 focus:bg-white transition-all font-bold text-slate-800">
+                        {field.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                      </select>
                     ) : (
-                      <input name={field.name} defaultValue={field.name === 'marqueeUpdates' && Array.isArray(editingItem?.[field.name]) ? editingItem[field.name].join(', ') : editingItem?.[field.name]} required className="w-full bg-slate-50 border-2 border-transparent rounded-2xl p-4 outline-none focus:border-blue-500 focus:bg-white transition-all font-bold text-slate-800" />
+                      <input name={field.name} defaultValue={field.name === 'marqueeUpdates' && Array.isArray(editingItem?.[field.name]) ? editingItem[field.name].join(', ') : (editingItem?.[field.name] || '')} required className="w-full bg-slate-50 border-2 border-transparent rounded-2xl p-4 outline-none focus:border-blue-500 focus:bg-white transition-all font-bold text-slate-800" />
                     )}
                   </div>
                 ))}

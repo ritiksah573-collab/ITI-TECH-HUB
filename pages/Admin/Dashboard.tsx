@@ -61,7 +61,6 @@ const AdminDashboard = () => {
       if (key === 'marqueeUpdates' && typeof value === 'string') {
         item[key] = value.split(',').map(s => s.trim()).filter(s => s !== "");
       } else {
-        // Trim strings to avoid hidden spaces breaking filters
         item[key] = typeof value === 'string' ? value.trim() : value; 
       }
     });
@@ -127,10 +126,10 @@ const AdminDashboard = () => {
       case 'exams':
         return [
           { name: 'title', label: 'Exam/Result Title', type: 'text' },
-          { name: 'type', label: 'Category (Must match Tab)', type: 'select', options: ['Schedule', 'Result'] },
+          { name: 'type', label: 'Select Category', type: 'select', options: ['Schedule', 'Result'] },
           { name: 'state', label: 'State Name', type: 'text' },
           { name: 'board', label: 'Board Name (e.g. NCVT)', type: 'text' },
-          { name: 'date', label: 'Date/Year', type: 'text' },
+          { name: 'date', label: 'Date/Year/Session', type: 'text' },
           { name: 'description', label: 'Short Description', type: 'textarea' },
           { name: 'link', label: 'Official Link URL', type: 'text' }
         ];

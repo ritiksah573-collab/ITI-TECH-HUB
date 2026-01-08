@@ -16,28 +16,48 @@ import { db } from "./firebase";
 export const dbService = {
   listenToCollection: (collectionName: string, callback: (data: any[]) => void) => {
     if (!db) return () => {};
+    
+    // Attempting a sorted query
     const q = query(collection(db, collectionName), orderBy("createdAt", "desc"));
+    
     return onSnapshot(q, (snapshot) => {
       const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       callback(items);
     }, (error) => {
       console.error(`Error listening to ${collectionName}:`, error);
-      callback([]);
+      // Fallback: If orderBy fails (e.g. missing index or missing fields), try simple fetch
+      const fallbackQ = query(collection(db, collectionName));
+      onSnapshot(fallbackQ, (snapshot) => {
+        const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Manual sort as fallback
+        items.sort((a: any, b: any) => {
+          const dateA = a.createdAt || a.updatedAt || "";
+          const dateB = b.createdAt || b.updatedAt || "";
+          return dateB.localeCompare(dateA);
+        });
+        callback(items);
+      });
     });
   },
 
   saveItem: async (collectionName: string, item: any) => {
     if (!db) return;
     try {
+      const timestamp = new Date().toISOString();
       if (item.id) {
-        // Use setDoc with merge: true so it works even if the document doesn't exist yet
         const docRef = doc(db, collectionName, String(item.id));
         const { id, ...data } = item;
-        await setDoc(docRef, { ...data, updatedAt: new Date().toISOString() }, { merge: true });
+        // Ensure createdAt is NEVER lost during updates
+        await setDoc(docRef, { 
+          ...data, 
+          updatedAt: timestamp,
+          createdAt: data.createdAt || timestamp // Fallback if somehow missing
+        }, { merge: true });
       } else {
         await addDoc(collection(db, collectionName), {
           ...item,
-          createdAt: new Date().toISOString()
+          createdAt: timestamp,
+          updatedAt: timestamp
         });
       }
       return { success: true };
@@ -75,13 +95,11 @@ export const dbService = {
     });
   },
 
-  // Admin Profile Management
   getAdminProfile: async () => {
     if (!db) return null;
     const docRef = doc(db, "settings", "adminProfile");
     const snap = await getDoc(docRef);
     if (snap.exists()) return snap.data();
-    // Default if not set in cloud yet
     return { username: "admin", password: "itiadmin123" };
   },
 

@@ -52,7 +52,9 @@ const AdminDashboard = () => {
   const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const item: any = editingItem?.id ? { id: editingItem.id } : {};
+    
+    // CRITICAL FIX: Preserve the original item data (like createdAt) when editing
+    const item: any = editingItem ? { ...editingItem } : {};
     
     formData.forEach((value, key) => { 
       if (key === 'marqueeUpdates' && typeof value === 'string') {
@@ -63,7 +65,6 @@ const AdminDashboard = () => {
     });
     
     if (activeTab === 'siteConfig') {
-      // Force the correct ID for site configuration
       await dbService.saveItem('settings', { ...item, id: 'siteConfig' });
     } else if (activeTab === 'profile') {
       await dbService.saveAdminProfile(item);
@@ -113,7 +114,7 @@ const AdminDashboard = () => {
       case 'exams':
         return [
           { name: 'title', label: 'Exam/Result Title', type: 'text' },
-          { name: 'type', label: 'Category (Must be: Schedule OR Result)', type: 'select', options: ['Schedule', 'Result'] },
+          { name: 'type', label: 'Category', type: 'select', options: ['Schedule', 'Result'] },
           { name: 'state', label: 'State Name', type: 'text' },
           { name: 'board', label: 'Board Name (e.g. NCVT)', type: 'text' },
           { name: 'date', label: 'Date/Year', type: 'text' },
@@ -131,7 +132,7 @@ const AdminDashboard = () => {
         return [
            { name: 'title', label: 'Note Title', type: 'text' },
            { name: 'subject', label: 'Subject', type: 'text' },
-           { name: 'branch', label: 'Trade (ITI Electrician, etc)', type: 'text' },
+           { name: 'branch', label: 'Trade', type: 'text' },
            { name: 'semester', label: 'Semester/Year', type: 'text' },
            { name: 'link', label: 'PDF Link', type: 'text' }
         ];
@@ -142,25 +143,10 @@ const AdminDashboard = () => {
           { name: 'startDate', label: 'Start Date', type: 'text' },
           { name: 'applyLink', label: 'Apply Link URL', type: 'text' }
         ];
-      case 'handwritten':
-        return [
-          { name: 'title', label: 'Notes Title', type: 'text' },
-          { name: 'subject', label: 'Subject', type: 'text' },
-          { name: 'trade', label: 'Trade Name', type: 'text' },
-          { name: 'link', label: 'PDF Link', type: 'text' }
-        ];
-      case 'scholarships':
-        return [
-          { name: 'name', label: 'Scholarship Name', type: 'text' },
-          { name: 'provider', label: 'Provider Name', type: 'text' },
-          { name: 'amount', label: 'Benefit/Amount', type: 'text' },
-          { name: 'applyLink', label: 'Apply Link URL', type: 'text' }
-        ];
       default:
         return [
           { name: 'title', label: 'Title', type: 'text' },
-          { name: 'link', label: 'Link', type: 'text' },
-          { name: 'subject', label: 'Subject', type: 'text' }
+          { name: 'link', label: 'Link', type: 'text' }
         ];
     }
   };
@@ -209,59 +195,36 @@ const AdminDashboard = () => {
           <div className="flex flex-col items-center justify-center py-32"><Loader2 className="animate-spin text-blue-600" size={40} /></div>
         ) : (
           <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-            {activeTab === 'contacts' ? (
-              <div className="p-4 space-y-4">
-                 {data.map(lead => (
-                   <div key={lead.id} className="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-start">
-                      <div>
-                         <h3 className="font-bold text-slate-900">{lead.name}</h3>
-                         <p className="text-sm text-blue-600 font-bold">{lead.email}</p>
-                         <p className="mt-3 text-slate-600 font-medium">{lead.message}</p>
-                         <p className="mt-2 text-[10px] text-slate-400 font-bold uppercase">{lead.createdAt}</p>
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 border-b border-gray-100">
+                <tr>
+                  <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Details</th>
+                  <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {data.map((item) => (
+                  <tr key={item.id} className="hover:bg-slate-50 transition">
+                    <td className="px-8 py-5">
+                      <div className="font-black text-slate-900 text-lg">{item.title || item.name || item.examName || "Untitled"}</div>
+                      <div className="text-xs text-slate-400 font-bold uppercase mt-1">
+                        {item.type ? `[${item.type}] ` : ''} 
+                        {item.state || item.subject || item.company || "No Category"}
                       </div>
-                      <button onClick={() => handleDelete(lead.id)} className="text-red-400 hover:text-red-600"><Trash2 size={18}/></button>
-                   </div>
-                 ))}
-                 {data.length === 0 && <p className="text-center py-10 text-gray-400 font-bold uppercase tracking-widest text-xs">No customer inquiries found.</p>}
-              </div>
-            ) : activeTab === 'siteConfig' || activeTab === 'profile' ? (
-              <div className="p-12 text-center">
-                 <div className="w-24 h-24 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                    {activeTab === 'siteConfig' ? <Settings size={48} /> : <UserCircle size={48} />}
-                 </div>
-                 <h2 className="text-2xl font-black text-slate-900 mb-2">Configure {activeTab === 'siteConfig' ? 'Website Appearance' : 'Admin Account'}</h2>
-                 <p className="text-slate-400 mb-8 font-medium">Click below to update your global website parameters or security settings.</p>
-                 <button onClick={() => { setEditingItem(data[0]); setShowModal(true); }} className="px-12 py-4 bg-slate-900 text-white rounded-2xl font-black shadow-lg hover:bg-black transition">Edit Configuration</button>
-              </div>
-            ) : (
-              <table className="w-full text-left">
-                <thead className="bg-slate-50 border-b border-gray-100">
-                  <tr>
-                    <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">Details</th>
-                    <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                    </td>
+                    <td className="px-8 py-5 text-right flex justify-end gap-3">
+                      <button onClick={() => { setEditingItem(item); setShowModal(true); }} className="p-2.5 text-blue-600 hover:bg-blue-50 rounded-xl transition"><Edit size={20}/></button>
+                      <button onClick={() => handleDelete(item.id)} className="p-2.5 text-red-600 hover:bg-red-50 rounded-xl transition"><Trash2 size={20}/></button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {data.map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-50 transition">
-                      <td className="px-8 py-5">
-                        <div className="font-black text-slate-900 text-lg">{item.title || item.name || item.examName}</div>
-                        <div className="text-xs text-slate-400 font-bold uppercase mt-1">{item.company || item.subject || item.branch || item.state || item.type}</div>
-                      </td>
-                      <td className="px-8 py-5 text-right flex justify-end gap-3">
-                        <button onClick={() => { setEditingItem(item); setShowModal(true); }} className="p-2.5 text-blue-600 hover:bg-blue-50 rounded-xl transition"><Edit size={20}/></button>
-                        <button onClick={() => handleDelete(item.id)} className="p-2.5 text-red-600 hover:bg-red-50 rounded-xl transition"><Trash2 size={20}/></button>
-                      </td>
-                    </tr>
-                  ))}
-                  {data.length === 0 && (
-                    <tr>
-                      <td colSpan={2} className="px-8 py-12 text-center text-gray-300 font-black uppercase text-xs tracking-widest">No entries found in this collection.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            )}
+                ))}
+                {data.length === 0 && (
+                  <tr>
+                    <td colSpan={2} className="px-8 py-12 text-center text-gray-300 font-black uppercase text-xs tracking-widest">No entries found.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         )}
       </main>
@@ -279,7 +242,7 @@ const AdminDashboard = () => {
                   <div key={field.name} className={field.type === 'textarea' || field.name === 'heroTitle' || field.name === 'marqueeUpdates' || field.name === 'logoUrl' || field.name === 'siteName' ? 'md:col-span-2' : ''}>
                     <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">{field.label}</label>
                     {field.type === 'textarea' ? (
-                      <textarea name={field.name} defaultValue={editingItem?.[field.name]} required rows={3} className="w-full bg-slate-50 border-2 border-transparent rounded-2xl p-4 outline-none focus:border-blue-500 focus:bg-white transition-all font-medium" />
+                      <textarea name={field.name} defaultValue={editingItem?.[field.name] || ''} required rows={3} className="w-full bg-slate-50 border-2 border-transparent rounded-2xl p-4 outline-none focus:border-blue-500 focus:bg-white transition-all font-medium" />
                     ) : field.type === 'select' ? (
                       <select name={field.name} defaultValue={editingItem?.[field.name] || field.options?.[0]} className="w-full bg-slate-50 border-2 border-transparent rounded-2xl p-4 outline-none focus:border-blue-500 focus:bg-white transition-all font-bold text-slate-800">
                         {field.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
